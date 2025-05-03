@@ -13,9 +13,7 @@ class ClientSegment(models.Model):
 
 
 class Client(models.Model):
-    """
-    Modèle principal représentant un client dans le système.
-    """
+
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
@@ -26,7 +24,7 @@ class Client(models.Model):
 
     # Solde du client (positif si le client nous doit de l'argent, négatif si nous lui devons)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-
+    alert_threshold = models.DecimalField(max_digits=10,decimal_places=2,default=5000.00,verbose_name="Seuil d'alerte de solde")
     # Métadonnées
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

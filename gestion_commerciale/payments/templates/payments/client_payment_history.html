@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Historique des paiements</h1>
+    <p class="text-gray-600 mb-3">Client : <strong>{{ client.name }}</strong></p>
+    <p class="text-sm text-gray-600 mb-3">Seuil d'alerte : <strong>{{ client.alert_threshold }} DH</strong></p>
+    {% if client.balance > client.alert_threshold %}
+        <p class="text-red-600 font-bold mb-3">⚠ Solde critique !</p>
+    {% endif %}
+
+    <div class="bg-white shadow rounded-lg p-4 mb-6">
+        <p class="text-sm text-gray-500">Total payé</p>
+        <p class="text-3xl font-bold text-green-600">{{ total_paid|floatformat:2 }} DH</p>
+    </div>
+
+    <a href="{% url 'payments:export_client_payments_excel' client.id %}"
+        class="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition mb-4">
+        📥 Exporter Paiements Excel
+    </a>
+    <a href="{% url 'payments:export_client_payments_pdf' client.id %}"
+        class="ml-2 inline-block bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
+        🧾 Export Paiements PDF
+    </a>
+
+
+
+    <div class="bg-white shadow overflow-hidden rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Date</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Montant (DH)</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Méthode</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Enregistré par</th>
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-600">Statut</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+                {% for p in payments %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm text-gray-800">{{ p.date|date:"d/m/Y H:i" }}</td>
+                        <td class="px-6 py-4 text-sm text-green-600 font-medium">{{ p.amount }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ p.get_method_display }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ p.user }}</td>
+                        <td class="px-6 py-4 text-sm">
+                            {% if p.is_cancelled %}
+                                <span class="text-red-500 font-semibold">Annulé</span>
+                            {% else %}
+                                <span class="text-green-600">Valide</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-right">
+                            {% if not p.is_cancelled %}
+                                <a href="{% url 'payments:cancel_payment' p.id %}"
+                                   class="text-red-600 hover:underline text-sm">Annuler</a>
+                            {% else %}
+                                <span class="text-gray-500 italic">Annulé</span>
+                            {% endif %}
+                        </td>                        
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-gray-500 py-6">Aucun paiement enregistré.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-6">
+        <a href="{% url 'payments:client_debts_list' %}" class="text-blue-600 hover:underline">
+            ← Retour à la liste des clients débiteurs
+        </a>
+    </div>
+</div>
+{% endblock %}

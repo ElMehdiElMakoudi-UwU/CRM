@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-lg mx-auto mt-12 bg-white shadow-md p-6 rounded">
+    <h2 class="text-xl font-bold text-red-600 mb-4">Annulation du paiement</h2>
+    <p>Voulez-vous vraiment annuler le paiement de <strong>{{ payment.amount }} DH</strong> effectué par <strong>{{ payment.client.name }}</strong> ?</p>
+
+    <form method="post" class="mt-6">
+        {% csrf_token %}
+        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mr-2">
+            Oui, annuler
+        </button>
+        <a href="{% url 'payments:client_payment_history' payment.client.id %}" class="text-gray-700 hover:underline">
+            Retour
+        </a>
+    </form>
+</div>
+{% endblock %}

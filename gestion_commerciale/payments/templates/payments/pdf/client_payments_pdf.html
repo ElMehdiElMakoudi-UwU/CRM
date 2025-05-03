@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+        h1 { text-align: center; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Paiements de {{ client.name }}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Montant (DH)</th>
+                <th>Méthode</th>
+                <th>Utilisateur</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in payments %}
+            <tr>
+                <td>{{ p.date|date:"d/m/Y H:i" }}</td>
+                <td>{{ p.amount }}</td>
+                <td>{{ p.get_method_display }}</td>
+                <td>{{ p.user }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

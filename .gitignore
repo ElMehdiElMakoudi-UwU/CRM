@@ -1,0 +1,67 @@
+# Environnements virtuels
+venv/
+env/
+ENV/
+.venv/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Base de données SQLite
+*.sqlite3
+
+# Fichiers de logs et temporaires
+*.log
+*.pot
+*.mo
+*.tmp
+*.swp
+*.bak
+
+# Fichiers et dossiers de l'IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Paramètres locaux Django
+*.env
+.env.*
+local_settings.py
+settings_local.py
+
+# Django static & media (générés automatiquement)
+staticfiles/
+static/
+media/
+
+# Migrations cachées ou non versionnées
+**/migrations/*.pyc
+**/migrations/__pycache__/
+**/migrations/*.pyo
+
+# Fichiers OS
+.DS_Store
+Thumbs.db
+
+# Fichiers de build
+dist/
+build/
+*.egg-info/
+
+# Coverage / testing
+htmlcov/
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+
+# Docker (si utilisé)
+*.pid
+*.seed
+*.pid.lock
+
+# VSCode workspace config (optionnel)
+*.code-workspace

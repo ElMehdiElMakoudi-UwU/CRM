@@ -15,6 +15,11 @@ class Sale(models.Model):
     
     def get_balance_due(self):
         return self.total_amount - self.amount_paid
+    
+    def save(self, *args, **kwargs):
+        # Détection automatique du crédit
+        self.is_credit = self.amount_paid < self.total_amount
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Vente #{self.id} - {self.client or 'Client anonyme'}"

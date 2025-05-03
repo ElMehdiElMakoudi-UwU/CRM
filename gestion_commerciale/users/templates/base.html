@@ -56,6 +56,16 @@
                 </ul>
             </details>
 
+            <!-- Ventes -->
+            <details class="group">
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Ventes</summary>
+                <ul class="ml-4 mt-1 space-y-1">
+                    <li><a href="{% url 'sales:sale_list' %}" class="block hover:text-blue-500">Liste</a></li>
+                    <li><a href="{% url 'sales:sale_create' %}" class="block hover:text-blue-500">Nouvelle vente</a></li>
+                </ul>
+            </details>
+
+
             <!-- Utilisateurs -->
             <a href="{% url 'users:user_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">Utilisateurs</a>
 
