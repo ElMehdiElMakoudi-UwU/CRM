@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-4">
+  <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
+    <i data-lucide="folder-plus" class="w-6 h-6 text-indigo-600"></i>
+    {% if object %} Modifier la catégorie {% else %} Ajouter une catégorie {% endif %}
+  </h2>
+
+  <form method="post" class="space-y-4 bg-white p-6 rounded shadow">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Enregistrer</button>
+  </form>
+
+  <a href="{% url 'products:category-list' %}" class="inline-block mt-4 text-indigo-600 hover:underline">← Retour</a>
+</div>
+
+<script>lucide.createIcons();</script>
+{% endblock %}

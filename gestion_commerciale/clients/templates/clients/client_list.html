@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Liste des Clients</h1>
+
+<table class="min-w-full bg-white border">
+  <thead class="bg-gray-100">
+    <tr>
+      <th class="text-left px-4 py-2">Nom</th>
+      <th class="text-left px-4 py-2">Téléphone</th>
+      <th class="text-left px-4 py-2">Email</th>
+      <th class="text-left px-4 py-2">Solde</th>
+      <th class="text-left px-4 py-2">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for client in clients %}
+    <tr class="border-t">
+      <td class="px-4 py-2">{{ client.name }}</td>
+      <td class="px-4 py-2">{{ client.phone }}</td>
+      <td class="px-4 py-2">{{ client.email }}</td>
+      <td class="px-4 py-2">{{ client.balance }} MAD</td>
+      <td class="px-4 py-2">
+        <a href="{% url 'clients:client_detail' client.pk %}" class="text-blue-600 hover:underline">Voir</a> |
+        <a href="{% url 'clients:client_update' client.pk %}" class="text-green-600 hover:underline">Modifier</a> |
+        <a href="{% url 'clients:client_delete' client.pk %}" class="text-red-600 hover:underline">Supprimer</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="text-center py-4">Aucun client trouvé.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<a href="{% url 'clients:client_create' %}" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Ajouter un Client</a>
+{% endblock %}

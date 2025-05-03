@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Commandes fournisseurs</h1>
+    <a href="{% url 'purchase_order_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Nouvelle commande</a>
+
+    <div class="mt-6 bg-white rounded shadow p-4">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="text-left border-b">
+                    <th class="py-2">Commande</th>
+                    <th>Fournisseur</th>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Reçue ?</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr class="border-b">
+                    <td class="py-2">#{{ order.id }}</td>
+                    <td>{{ order.supplier.name }}</td>
+                    <td>{{ order.order_date }}</td>
+                    <td>{{ order.total_amount }} MAD</td>
+                    <td>
+                        {% if order.received %}
+                            <span class="text-green-600 font-semibold">Oui</span>
+                        {% else %}
+                            <span class="text-red-600 font-semibold">Non</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'suppliers:purchase_order_detail' order.pk %}" class="text-blue-500 hover:underline">Détails</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="py-4 text-center">Aucune commande enregistrée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

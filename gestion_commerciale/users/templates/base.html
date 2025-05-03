@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}CRM App{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+
+    <!-- Lucide Icons (facultatif) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+    <!-- ✅ SIDEBAR -->
+    <aside class="w-64 bg-white shadow-md h-screen fixed flex flex-col">
+        <div class="px-6 py-4 text-2xl font-bold text-blue-600 border-b">
+            <a href="{% url 'home' %}" class="block hover:text-blue-500">CRM APP</a>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2 text-sm">
+
+            <!-- Produits -->
+            <details class="group">
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Produits</summary>
+                <ul class="ml-4 mt-1 space-y-1">
+                    <li><a href="{% url 'products:product-list' %}" class="block hover:text-blue-500">Liste</a></li>
+                    <li><a href="{% url 'products:category-list' %}" class="block hover:text-blue-500">Catégories</a></li>
+                </ul>
+            </details>
+
+            <!-- Fournisseurs -->
+            <a href="{% url 'suppliers:supplier_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">Fournisseurs</a>
+
+            <!-- Clients -->
+            <details class="group">
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Clients</summary>
+                <ul class="ml-4 mt-1 space-y-1">
+                    <li><a href="{% url 'clients:client_list' %}" class="block hover:text-blue-500">Liste</a></li>
+                    <li><a href="{% url 'clients:segment_list' %}" class="block hover:text-blue-500">Segments</a></li>
+                </ul>
+            </details>
+
+            <!-- Stock -->
+            <details class="group">
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Stock</summary>
+                <ul class="ml-4 mt-1 space-y-1">
+                    <li><a href="{% url 'inventory:stock_list' %}" class="block hover:text-blue-500">Inventaire</a></li>
+                    <li><a href="{% url 'inventory:stock_movement_list' %}" class="block hover:text-blue-500">Mouvements</a></li>
+                    <li><a href="{% url 'inventory:stock_alerts' %}" class="block hover:text-blue-500">Alertes</a></li>
+                </ul>
+            </details>
+
+            <!-- Utilisateurs -->
+            <a href="{% url 'users:user_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">Utilisateurs</a>
+
+            <!-- Authentification -->
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="block py-2 font-medium text-red-600 hover:text-red-800">Se déconnecter</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="block py-2 font-medium text-blue-600 hover:text-blue-800">Connexion</a>
+            {% endif %}
+        </nav>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL + FOOTER -->
+    <div class="ml-64 flex flex-col min-h-screen">
+
+        <!-- CONTENU QUI PREND LA PLACE DISPONIBLE -->
+        <main class="flex-grow p-8">
+        {% block content %}{% endblock %}
+        </main>
+
+        <!-- FOOTER FIXÉ EN BAS PAR LE FLEX -->
+        <footer class="bg-white text-center text-sm text-gray-400 py-4 border-t">
+        © {{ now|date:"Y" }} - Application de gestion commerciale
+        </footer>
+    </div>
+
+    <!-- Activer Lucide -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

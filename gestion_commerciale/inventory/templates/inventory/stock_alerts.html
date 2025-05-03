@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Alertes de stock faible</h1>
+    <ul class="space-y-2">
+        {% for alert in alerts %}
+        <li class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+            <p><strong>{{ alert.product.name }}</strong> — {{ alert.message }} ({{ alert.created_at|date:"Y-m-d H:i" }})</p>
+        </li>
+        {% empty %}
+        <p class="text-gray-600">Aucune alerte active.</p>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

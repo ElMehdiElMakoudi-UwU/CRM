@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Liste des fournisseurs</h1>
+    <a href="{% url 'suppliers:supplier_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Ajouter un fournisseur</a>
+
+    <div class="mt-6 bg-white rounded shadow p-4">
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="text-left border-b">
+                    <th class="py-2">Nom</th>
+                    <th>Email</th>
+                    <th>Téléphone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr class="border-b">
+                    <td class="py-2">{{ supplier.name }}</td>
+                    <td>{{ supplier.email }}</td>
+                    <td>{{ supplier.phone }}</td>
+                    <td>
+                        <a href="{% url 'suppliers:supplier_update' supplier.pk %}" class="text-blue-500 hover:underline">Modifier</a> |
+                        <a href="{% url 'suppliers:supplier_delete' supplier.pk %}" class="text-red-500 hover:underline">Supprimer</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="py-4 text-center">Aucun fournisseur trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-6 max-w-5xl mx-auto space-y-6">
+  <h1 class="text-2xl font-bold">Nouvelle vente</h1>
+
+  <form method="POST" id="sale-form" action="{% url 'sales:sale_create' %}">
+    {% csrf_token %}
+
+    <!-- Client Info -->
+    <div class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-2">Client</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          {{ form.client.label_tag }} {{ form.client }}
+        </div>
+        <div>
+          {{ form.is_credit.label_tag }} {{ form.is_credit }}
+        </div>
+        <div class="col-span-2">
+          {{ form.notes.label_tag }} {{ form.notes }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Product List Table -->
+    <div class="bg-white p-4 rounded shadow">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">Produits</h2>
+        <button type="button" id="open-product-modal" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+          + Ajouter un produit
+        </button>
+      </div>
+      <table class="w-full text-sm text-left">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-2">Produit</th>
+            <th class="p-2 w-24">Quantité</th>
+            <th class="p-2 w-28">Prix unitaire</th>
+            <th class="p-2 w-28">Total</th>
+            <th class="p-2 w-12"></th>
+          </tr>
+        </thead>
+        <tbody id="product-table-body">
+          <!-- Rows will be inserted here via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totals -->
+    <div class="bg-white p-4 rounded shadow">
+      <h2 class="text-lg font-semibold mb-2">Paiement</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block font-semibold">Montant total :</label>
+          <input id="total-global" name="total_amount" readonly class="w-full bg-gray-100 text-right px-2 py-1 rounded">
+        </div>
+        <div>
+          {{ payment_form.amount.label_tag }} {{ payment_form.amount }}
+        </div>
+        <div>
+          {{ payment_form.method.label_tag }} {{ payment_form.method }}
+        </div>
+        <div>
+          <label class="block font-semibold">Montant restant :</label>
+          <input id="montant-restant" readonly class="w-full bg-gray-100 text-right px-2 py-1 rounded">
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="mt-6 text-right">
+      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Enregistrer la vente</button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal: Product Selector -->
+<div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-start z-50">
+  <div class="bg-white mt-20 max-w-3xl w-full rounded-lg shadow-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold">Sélectionner un produit</h3>
+      <button type="button" id="close-product-modal" class="text-gray-500 hover:text-red-600">&#10005;</button>
+    </div>
+    <select id="product-category-filter" class="mb-4 w-full border px-2 py-1 rounded">
+      <option value="">-- Filtrer par catégorie --</option>
+      {% for cat in categories %}
+      <option value="{{ cat.id }}">{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" id="product-search" placeholder="Rechercher..." class="w-full mb-4 px-3 py-2 border rounded">
+    <div id="product-list" class="space-y-2 max-h-[300px] overflow-y-auto">
+      <!-- Products will be loaded via AJAX here -->
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('product-modal');
+  const openBtn = document.getElementById('open-product-modal');
+  const closeBtn = document.getElementById('close-product-modal');
+  const productList = document.getElementById('product-list');
+  const tableBody = document.getElementById('product-table-body');
+  const totalGlobal = document.getElementById('total-global');
+  const montantRestant = document.getElementById('montant-restant');
+  const amountPaidInput = document.querySelector('input[name="amount"]');
+  const categoryFilter = document.getElementById('product-category-filter');
+  const searchInput = document.getElementById('product-search');
+
+  let selectedProducts = [];
+
+  openBtn.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+    loadProducts();
+  });
+
+  closeBtn.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  searchInput.addEventListener('input', () => {
+    loadProducts();
+  });
+
+  categoryFilter.addEventListener('change', () => {
+    loadProducts();
+  });
+
+  function loadProducts() {
+    const query = searchInput.value;
+    const categoryId = categoryFilter.value;
+    const url = `/products/search/?q=${query}&category=${categoryId}`;
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        productList.innerHTML = '';
+        data.forEach(product => {
+          const div = document.createElement('div');
+          div.className = "flex justify-between items-center border p-2 rounded hover:bg-gray-50";
+          div.innerHTML = `
+            <div>
+              <p class="font-semibold">${product.name}</p>
+              <p class="text-sm text-gray-500">${product.category || ''}</p>
+            </div>
+            <button class="bg-blue-600 text-white px-3 py-1 rounded" data-id="${product.id}" data-name="${product.name}" data-price="${product.selling_price}">
+              Ajouter
+            </button>
+          `;
+          div.querySelector('button').addEventListener('click', () => {
+            addProductToTable(product);
+            modal.classList.add('hidden');
+          });
+          productList.appendChild(div);
+        });
+      });
+  }
+
+  function addProductToTable(product) {
+    if (selectedProducts.includes(product.id)) return;
+
+    selectedProducts.push(product.id);
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="p-2">${product.name}<input type="hidden" name="products[]" value="${product.id}"></td>
+      <td class="p-2"><input type="number" name="quantities[]" value="1" min="1" class="w-20 border rounded px-1 py-0.5 text-right"></td>
+      <td class="p-2"><input type="number" name="unit_prices[]" value="${product.selling_price}" class="w-24 border rounded px-1 py-0.5 text-right"></td>
+      <td class="p-2 total-cell text-right">${product.selling_price}</td>
+      <td class="p-2"><button type="button" class="text-red-600 remove-row">&#10005;</button></td>
+    `;
+
+    row.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', () => updateRowTotal(row));
+    });
+
+    row.querySelector('.remove-row').addEventListener('click', () => {
+      row.remove();
+      selectedProducts = selectedProducts.filter(id => id !== product.id);
+      updateTotals();
+    });
+
+    tableBody.appendChild(row);
+    updateTotals();
+  }
+
+  function updateRowTotal(row) {
+    const qty = parseFloat(row.querySelector('input[name="quantities[]"]').value) || 0;
+    const price = parseFloat(row.querySelector('input[name="unit_prices[]"]').value) || 0;
+    const total = qty * price;
+    row.querySelector('.total-cell').textContent = total.toFixed(2);
+    updateTotals();
+  }
+
+  function updateTotals() {
+    let total = 0;
+    tableBody.querySelectorAll('tr').forEach(row => {
+      total += parseFloat(row.querySelector('.total-cell').textContent) || 0;
+    });
+    totalGlobal.value = total.toFixed(2);
+    const paid = parseFloat(amountPaidInput.value) || 0;
+    montantRestant.value = (total - paid).toFixed(2);
+  }
+
+  if (amountPaidInput) {
+    amountPaidInput.addEventListener('input', updateTotals);
+  }
+});
+</script>
+{% endblock %}

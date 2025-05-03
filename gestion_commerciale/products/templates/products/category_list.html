@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+      <i data-lucide="list" class="w-6 h-6 text-indigo-600"></i> Catégories
+    </h2>
+    <a href="{% url 'products:category-create' %}" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+      + Ajouter une catégorie
+    </a>
+  </div>
+
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full text-sm text-gray-700">
+      <thead class="bg-gray-100 text-xs uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">Nom</th>
+          <th class="px-4 py-3 text-left">Description</th>
+          <th class="px-4 py-3 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for category in categories %}
+        <tr class="border-t">
+          <td class="px-4 py-3">{{ category.name }}</td>
+          <td class="px-4 py-3">{{ category.description }}</td>
+          <td class="px-4 py-3 flex gap-2">
+            <a href="{% url 'products:category-update' category.pk %}" class="text-indigo-600 hover:underline">Modifier</a>
+            <a href="{% url 'products:category-delete' category.pk %}" class="text-red-600 hover:underline">Supprimer</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="px-4 py-4 text-center text-gray-500">Aucune catégorie enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>lucide.createIcons();</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Historique des mouvements de stock</h1>
+    <table class="min-w-full bg-white rounded shadow">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="py-2 px-4 text-left">Produit</th>
+                <th class="py-2 px-4 text-left">Type</th>
+                <th class="py-2 px-4 text-left">Quantité</th>
+                <th class="py-2 px-4 text-left">Source</th>
+                <th class="py-2 px-4 text-left">Utilisateur</th>
+                <th class="py-2 px-4 text-left">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movement in movements %}
+            <tr class="border-b">
+                <td class="py-2 px-4">{{ movement.product.name }}</td>
+                <td class="py-2 px-4">{{ movement.get_movement_type_display }}</td>
+                <td class="py-2 px-4">{{ movement.quantity }}</td>
+                <td class="py-2 px-4">{{ movement.source }}</td>
+                <td class="py-2 px-4">{{ movement.user }}</td>
+                <td class="py-2 px-4">{{ movement.date|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

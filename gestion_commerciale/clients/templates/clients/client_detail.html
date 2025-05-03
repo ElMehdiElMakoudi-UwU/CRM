@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Détails du Client</h1>
+<ul class="space-y-2">
+  <li><strong>Nom :</strong> {{ client.name }}</li>
+  <li><strong>Téléphone :</strong> {{ client.phone }}</li>
+  <li><strong>Email :</strong> {{ client.email }}</li>
+  <li><strong>Adresse :</strong> {{ client.address }}</li>
+  <li><strong>Segment :</strong> {{ client.segment }}</li>
+  <li><strong>Solde :</strong> {{ client.balance }} MAD</li>
+</ul>
+<a href="{% url 'clients:client_update' client.pk %}" class="inline-block mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Modifier</a>
+<a href="{% url 'clients:client_list' %}" class="ml-2 inline-block text-gray-600 underline">← Retour à la liste</a>
+{% endblock %}

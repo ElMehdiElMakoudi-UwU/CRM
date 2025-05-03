@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ user_form.instance.pk|yesno:"Modifier,Ajouter" }} un utilisateur{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">{{ user_form.instance.pk|yesno:"Modifier,Ajouter" }} un utilisateur</h3>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Informations utilisateur</h5>
+            {{ user_form.as_p }}
+        </div>
+        <div class="col-md-6">
+            <h5>Profil</h5>
+            {{ profile_form.as_p }}
+        </div>
+    </div>
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a href="{% url 'users:user_list' %}" class="btn btn-secondary">Annuler</a>
+    </div>
+</form>
+{% endblock %}

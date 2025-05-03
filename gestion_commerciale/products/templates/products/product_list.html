@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+      <i data-lucide="box" class="w-6 h-6 text-indigo-600"></i> Produits
+    </h2>
+    <a href="{% url 'products:product-create' %}" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+      + Ajouter un produit
+    </a>
+  </div>
+
+  <div class="bg-white shadow rounded-lg overflow-hidden">
+    <table class="min-w-full text-sm text-gray-700">
+      <thead class="bg-gray-100 text-xs uppercase">
+        <tr>
+          <th class="px-4 py-3 text-left">Nom</th>
+          <th class="px-4 py-3 text-left">Référence</th>
+          <th class="px-4 py-3 text-left">Prix</th>
+          <th class="px-4 py-3 text-left">Catégorie</th>
+          <th class="px-4 py-3 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr class="border-t">
+          <td class="px-4 py-3">{{ product.name }}</td>
+          <td class="px-4 py-3">{{ product.reference }}</td>
+          <td class="px-4 py-3">{{ product.selling_price }} MAD</td>
+          <td class="px-4 py-3">{{ product.category }}</td>
+          <td class="px-4 py-3 flex gap-2">
+            <a href="{% url 'products:product-update' product.pk %}" class="text-indigo-600 hover:underline">Modifier</a>
+            <a href="{% url 'products:product-delete' product.pk %}" class="text-red-600 hover:underline">Supprimer</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Aucun produit disponible.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>lucide.createIcons();</script>
+{% endblock %}

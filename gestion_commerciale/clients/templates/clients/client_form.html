@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">{% if form.instance.pk %}Modifier le Client{% else %}Ajouter un Client{% endif %}</h1>
+<form method="post" class="space-y-4">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enregistrer</button>
+</form>
+<a href="{% url 'clients:client_list' %}" class="inline-block text-gray-600 underline">Annuler</a>
+{% endblock %}

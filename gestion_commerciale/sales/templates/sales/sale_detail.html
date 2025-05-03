@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="p-6">
+  <h1 class="text-2xl font-bold mb-4">Détail de la vente #{{ sale.id }}</h1>
+
+  <div class="mb-4">
+    <p><strong>Client :</strong> {{ sale.client }}</p>
+    <p><strong>Date :</strong> {{ sale.date|date:"Y-m-d H:i" }}</p>
+    <p><strong>Total :</strong> {{ sale.total_amount }} MAD</p>
+    <p><strong>Payé :</strong> {{ sale.amount_paid }} MAD</p>
+    <p><strong>Reste dû :</strong> {{ sale.get_balance_due }} MAD</p>
+  </div>
+
+  <h2 class="text-xl font-semibold mt-6 mb-2">Produits vendus</h2>
+  <ul class="list-disc pl-6">
+    {% for item in items %}
+    <li>{{ item.quantity }} x {{ item.product.name }} à {{ item.unit_price }} MAD ({{ item.total_price }} MAD)</li>
+    {% endfor %}
+  </ul>
+
+  <h2 class="text-xl font-semibold mt-6 mb-2">Paiements</h2>
+  <ul class="list-disc pl-6">
+    {% for payment in payments %}
+    <li>{{ payment.date|date:"Y-m-d H:i" }} — {{ payment.amount }} MAD ({{ payment.get_method_display }})</li>
+    {% empty %}
+    <li>Aucun paiement.</li>
+    {% endfor %}
+  </ul>
+
+  <a href="{% url 'sales:sale_list' %}" class="mt-6 inline-block text-blue-600 hover:underline">← Retour à la liste</a>
+</div>
+{% endblock %}

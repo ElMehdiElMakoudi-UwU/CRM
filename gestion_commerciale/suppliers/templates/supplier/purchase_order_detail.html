@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-4 max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Commande #{{ order.id }}</h1>
+
+    <div class="bg-white shadow rounded p-6">
+        <p><strong>Fournisseur :</strong> {{ order.supplier.name }}</p>
+        <p><strong>Date :</strong> {{ order.order_date }}</p>
+        <p><strong>Reçue :</strong> {% if order.received %}Oui{% else %}Non{% endif %}</p>
+        <p><strong>Montant total :</strong> {{ order.total_amount }} MAD</p>
+        <p><strong>Notes :</strong> {{ order.notes|default:"—" }}</p>
+
+        <h2 class="text-xl font-semibold mt-6 mb-2">Articles commandés :</h2>
+        <table class="w-full table-auto">
+            <thead>
+                <tr class="border-b text-left">
+                    <th>Produit</th>
+                    <th>Quantité</th>
+                    <th>Prix unitaire</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr class="border-b">
+                    <td class="py-2">{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_price }} MAD</td>
+                    <td>{{ item.get_total_price }} MAD</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
