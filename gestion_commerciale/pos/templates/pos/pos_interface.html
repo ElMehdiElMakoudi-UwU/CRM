@@ -8,9 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     @media print {
-      body * {
-        visibility: hidden;
-      }
+      body * { visibility: hidden; }
       #receipt-preview, #receipt-preview * {
         visibility: visible;
       }
@@ -26,75 +24,67 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 p-4">
-  <form style="display: none;">
-    {% csrf_token %}
-  </form>
-  <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg grid grid-cols-1 lg:grid-cols-3 gap-4 p-6">
 
-    <!-- Left: Cart Summary -->
-    <div class="col-span-1">
-      <div class="mb-6">
-        <h2 class="text-xl font-bold">🛒 Panier</h2>
-        <div id="cart" class="overflow-y-auto max-h-96 mt-2 border rounded-xl p-4">
-          <table class="w-full text-left text-sm">
-            <thead>
-              <tr class="border-b">
-                <th>Produit</th>
-                <th>Qte</th>
-                <th>Prix</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="cart-items">
-              <!-- Cart items go here -->
-            </tbody>
-          </table>
-        </div>
+<body class="bg-gray-100 text-lg select-none touch-manipulation m-0 p-0 w-full">
+
+  <form style="display: none;">{% csrf_token %}</form>
+
+  <!-- ✅ Grille à 2 colonnes pleines -->
+  <div class="w-full h-full bg-white grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+
+    <!-- 🛒 Colonne Panier -->
+    <div class="space-y-6 p-4">
+      <h2 class="text-2xl font-bold">🛒 Panier</h2>
+      <div id="cart" class="overflow-y-auto max-h-[420px] border rounded-xl p-4 bg-gray-50">
+        <table class="w-full text-left text-base">
+          <thead>
+            <tr class="border-b font-semibold">
+              <th>Produit</th>
+              <th class="text-center">Qte</th>
+              <th class="text-right">Prix</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cart-items"></tbody>
+        </table>
       </div>
 
-      <!-- Totaux -->
-      <div class="mb-6 text-sm">
+      <div class="space-y-2 text-lg">
         <div class="flex justify-between"><span>Sous-total:</span><span id="subtotal">0.00 MAD</span></div>
         <div class="flex justify-between"><span>TVA (20%):</span><span id="vat">0.00 MAD</span></div>
-        <div class="flex justify-between font-bold text-lg"><span>Total:</span><span id="total">0.00 MAD</span></div>
+        <div class="flex justify-between font-bold text-xl"><span>Total:</span><span id="total">0.00 MAD</span></div>
       </div>
 
-      <!-- Paiement -->
-      <div class="mb-6">
-        <input type="number" id="paid-amount" placeholder="Montant Payé" class="border p-3 rounded-xl w-full mb-2" />
-        <select id="payment-method" class="border p-3 rounded-xl w-full mb-2">
+      <div class="space-y-3">
+        <input type="number" id="paid-amount" placeholder="💵 Montant Payé" class="border text-xl p-4 rounded-xl w-full" />
+        <select id="payment-method" class="border text-xl p-4 rounded-xl w-full">
           <option value="cash">Espèces</option>
           <option value="card">Carte</option>
           <option value="credit">Crédit</option>
         </select>
-        <div class="flex justify-between text-sm"><span>Payé:</span><span id="total-paid">0.00 MAD</span></div>
-        <div class="flex justify-between text-sm"><span>Rendu:</span><span id="change-due">0.00 MAD</span></div>
+        <div class="flex justify-between text-lg"><span>Payé:</span><span id="total-paid">0.00 MAD</span></div>
+        <div class="flex justify-between text-lg"><span>Rendu:</span><span id="change-due">0.00 MAD</span></div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex flex-wrap gap-3">
-        <button id="confirm-sale" class="bg-green-500 text-white w-full py-2 rounded-xl">✔ Valider</button>
-        <button id="cancel-sale" class="bg-red-500 text-white w-full py-2 rounded-xl">❌ Annuler</button>
-        <button id="print-receipt" class="bg-blue-500 text-white w-full py-2 rounded-xl">🖨 Ticket</button>
+      <div class="grid grid-cols-1 gap-4">
+        <button id="confirm-sale" class="bg-green-500 text-white text-xl py-4 rounded-xl w-full">✔ Valider</button>
+        <button id="cancel-sale" class="bg-red-500 text-white text-xl py-4 rounded-xl w-full">❌ Annuler</button>
+        <button id="print-receipt" class="bg-blue-500 text-white text-xl py-4 rounded-xl w-full">🖨 Ticket</button>
       </div>
     </div>
 
-    <!-- Right: Product Grid -->
-    <div class="col-span-2">
+    <!-- 📦 Colonne Produits -->
+    <div class="p-4">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold">📦 Produits</h2>
-        <input id="product-search" type="text" placeholder="Recherche / Scan..." class="border p-2 rounded-xl w-60" />
+        <h2 class="text-2xl font-bold">📦 Produits</h2>
+        <input id="product-search" type="text" placeholder="🔍 Recherche ou Scan..." class="border text-xl p-4 rounded-xl w-64" />
       </div>
-      <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        <!-- Produits dynamiques ici -->
+      <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <!-- Produits dynamiques via JS -->
       </div>
     </div>
-
   </div>
 
-  <!-- Ticket Preview Zone -->
   <div id="receipt-preview" class="hidden print:block mt-10"></div>
 </body>
 </html>
-  

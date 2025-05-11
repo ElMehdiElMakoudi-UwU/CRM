@@ -24,10 +24,13 @@
             <a href="{% url 'home' %}" class="block hover:text-blue-500">CRM APP</a>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2 text-sm">
+            <!-- Tableau de bord -->
+            <a href="{% url 'home' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">🏠 Tableau de bord</a>
 
-            <!-- Produits -->
+            <!-- POS -->
+            <a href="{% url 'pos:interface' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">🧾 Point de Vente (POS)</a>
             <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Produits</summary>
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">📦 Produits</summary>
                 <ul class="ml-4 mt-1 space-y-1">
                     <li><a href="{% url 'products:product-list' %}" class="block hover:text-blue-500">Liste</a></li>
                     <li><a href="{% url 'products:category-list' %}" class="block hover:text-blue-500">Catégories</a></li>
@@ -35,11 +38,11 @@
             </details>
 
             <!-- Fournisseurs -->
-            <a href="{% url 'suppliers:supplier_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">Fournisseurs</a>
+            <a href="{% url 'suppliers:supplier_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">🏭 Fournisseurs</a>
 
             <!-- Clients -->
             <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Clients</summary>
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">👥 Clients</summary>
                 <ul class="ml-4 mt-1 space-y-1">
                     <li><a href="{% url 'clients:client_list' %}" class="block hover:text-blue-500">Liste</a></li>
                     <li><a href="{% url 'clients:segment_list' %}" class="block hover:text-blue-500">Segments</a></li>
@@ -48,7 +51,7 @@
 
             <!-- Stock -->
             <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Stock</summary>
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">📊 Stock</summary>
                 <ul class="ml-4 mt-1 space-y-1">
                     <li><a href="{% url 'inventory:stock_list' %}" class="block hover:text-blue-500">Inventaire</a></li>
                     <li><a href="{% url 'inventory:stock_movement_list' %}" class="block hover:text-blue-500">Mouvements</a></li>
@@ -58,17 +61,16 @@
 
             <!-- Achats -->
             <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Achats</summary>
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">🛒 Achats</summary>
                 <ul class="ml-4 mt-1 space-y-1">
                     <li><a href="{% url 'purchases:purchase_list' %}" class="block hover:text-blue-500">Liste</a></li>
                     <li><a href="{% url 'purchases:purchase_create' %}" class="block hover:text-blue-500">Nouvel achat</a></li>
                 </ul>
             </details>
 
-
             <!-- Ventes -->
             <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Ventes</summary>
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">💰 Ventes</summary>
                 <ul class="ml-4 mt-1 space-y-1">
                     <li><a href="{% url 'sales:sale_list' %}" class="block hover:text-blue-500">Liste</a></li>
                     <li><a href="{% url 'sales:sale_create' %}" class="block hover:text-blue-500">Nouvelle vente</a></li>
@@ -77,14 +79,14 @@
 
             <!-- Paiements -->
             <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">Paiements</summary>
+                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">💳 Paiements</summary>
                 <ul class="ml-4 mt-1 space-y-1">
                     <li><a href="{% url 'payments:client_debts_list' %}" class="block hover:text-blue-500">Clients débiteurs</a></li>
                 </ul>
             </details>
 
             <!-- Utilisateurs -->
-            <a href="{% url 'users:user_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">Utilisateurs</a>
+            <a href="{% url 'users:user_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">👤 Utilisateurs</a>
 
             <!-- Authentification -->
             {% if user.is_authenticated %}
@@ -93,6 +95,7 @@
                 <a href="{% url 'login' %}" class="block py-2 font-medium text-blue-600 hover:text-blue-800">Connexion</a>
             {% endif %}
         </nav>
+
     </aside>
 
     <!-- CONTENU PRINCIPAL + FOOTER -->
