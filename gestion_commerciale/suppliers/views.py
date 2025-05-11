@@ -16,7 +16,7 @@ def supplier_create(request):
     if form.is_valid():
         form.save()
         messages.success(request, "Fournisseur ajouté avec succès.")
-        return redirect('supplier_list')
+        return redirect('suppliers:supplier_list')
     return render(request, 'supplier/supplier_form.html', {'form': form})
 
 def supplier_update(request, pk):
@@ -25,7 +25,7 @@ def supplier_update(request, pk):
     if form.is_valid():
         form.save()
         messages.success(request, "Fournisseur mis à jour.")
-        return redirect('supplier_list')
+        return redirect('suppliers:supplier_list')
     return render(request, 'supplier/supplier_form.html', {'form': form})
 
 def supplier_delete(request, pk):
@@ -33,7 +33,7 @@ def supplier_delete(request, pk):
     if request.method == "POST":
         supplier.delete()
         messages.success(request, "Fournisseur supprimé.")
-        return redirect('supplier_list')
+        return redirect('suppliers:supplier_list')
     return render(request, 'supplier/supplier_confirm_delete.html', {'supplier': supplier})
 
 # ------------------------
@@ -54,7 +54,7 @@ def purchase_order_create(request):
             item.order = order
             item.save()
         messages.success(request, "Commande fournisseur créée.")
-        return redirect('purchase_order_list')
+        return redirect('suppliers:purchase_order_list')
     return render(request, 'supplier/purchase_order_form.html', {
         'form': form,
         'formset': formset

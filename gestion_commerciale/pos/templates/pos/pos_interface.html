@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POS Interface</title>
+  <script defer src="/static/pos/pos.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #receipt-preview, #receipt-preview * {
+        visibility: visible;
+      }
+      #receipt-preview {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        padding: 10px;
+        background: white;
+        font-family: monospace;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-4">
+  <form style="display: none;">
+    {% csrf_token %}
+  </form>
+  <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg grid grid-cols-1 lg:grid-cols-3 gap-4 p-6">
+
+    <!-- Left: Cart Summary -->
+    <div class="col-span-1">
+      <div class="mb-6">
+        <h2 class="text-xl font-bold">🛒 Panier</h2>
+        <div id="cart" class="overflow-y-auto max-h-96 mt-2 border rounded-xl p-4">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b">
+                <th>Produit</th>
+                <th>Qte</th>
+                <th>Prix</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cart-items">
+              <!-- Cart items go here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totaux -->
+      <div class="mb-6 text-sm">
+        <div class="flex justify-between"><span>Sous-total:</span><span id="subtotal">0.00 MAD</span></div>
+        <div class="flex justify-between"><span>TVA (20%):</span><span id="vat">0.00 MAD</span></div>
+        <div class="flex justify-between font-bold text-lg"><span>Total:</span><span id="total">0.00 MAD</span></div>
+      </div>
+
+      <!-- Paiement -->
+      <div class="mb-6">
+        <input type="number" id="paid-amount" placeholder="Montant Payé" class="border p-3 rounded-xl w-full mb-2" />
+        <select id="payment-method" class="border p-3 rounded-xl w-full mb-2">
+          <option value="cash">Espèces</option>
+          <option value="card">Carte</option>
+          <option value="credit">Crédit</option>
+        </select>
+        <div class="flex justify-between text-sm"><span>Payé:</span><span id="total-paid">0.00 MAD</span></div>
+        <div class="flex justify-between text-sm"><span>Rendu:</span><span id="change-due">0.00 MAD</span></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-wrap gap-3">
+        <button id="confirm-sale" class="bg-green-500 text-white w-full py-2 rounded-xl">✔ Valider</button>
+        <button id="cancel-sale" class="bg-red-500 text-white w-full py-2 rounded-xl">❌ Annuler</button>
+        <button id="print-receipt" class="bg-blue-500 text-white w-full py-2 rounded-xl">🖨 Ticket</button>
+      </div>
+    </div>
+
+    <!-- Right: Product Grid -->
+    <div class="col-span-2">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">📦 Produits</h2>
+        <input id="product-search" type="text" placeholder="Recherche / Scan..." class="border p-2 rounded-xl w-60" />
+      </div>
+      <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <!-- Produits dynamiques ici -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Ticket Preview Zone -->
+  <div id="receipt-preview" class="hidden print:block mt-10"></div>
+</body>
+</html>
+  

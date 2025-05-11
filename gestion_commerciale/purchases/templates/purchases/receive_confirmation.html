@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="p-4 bg-white rounded shadow">
+    <h1 class="text-xl font-bold mb-4">Réception de commande</h1>
+    <p>Confirmez-vous la réception complète de la commande <strong>#{{ purchase.id }}</strong> ?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success">Confirmer la réception</button>
+      <a href="{% url 'purchases:purchase_detail' purchase.id %}" class="btn btn-secondary">Annuler</a>
+    </form>
+  </div>
+{% endblock %}

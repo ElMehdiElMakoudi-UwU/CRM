@@ -1,0 +1,14 @@
+{% for product in products %}
+<div class="flex justify-between items-center border p-2 rounded hover:bg-gray-50">
+  <div>
+    <p class="font-semibold">{{ product.name }}</p>
+    <p class="text-sm text-gray-500">{{ product.purchase_price }} DH</p>
+  </div>
+  <button class="bg-blue-600 text-white px-3 py-1 rounded"
+          onclick="addProductToTable({{ product.id }}, '{{ product.name|escapejs }}', {{ product.purchase_price|default:0 }})">
+    Ajouter
+  </button>
+</div>
+{% empty %}
+<p class="text-center text-red-500 py-4">Aucun produit trouvé.</p>
+{% endfor %}

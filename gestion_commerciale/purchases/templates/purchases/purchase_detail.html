@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold mb-4">Détail de l'Achat #{{ purchase.id }}</h1>
+    <div class="bg-white p-6 rounded shadow mb-6">
+        <p><strong>Fournisseur :</strong> {{ purchase.supplier.name }}</p>
+        <p><strong>Date :</strong> {{ purchase.date }}</p>
+        <p><strong>Status :</strong> {{ purchase.get_status_display }}</p>
+        <p><strong>Montant total :</strong> {{ purchase.total_amount }} DH</p>
+        <p><strong>Montant payé :</strong> {{ purchase.amount_paid }} DH</p>
+    </div>
+
+    <h2 class="text-xl font-semibold mb-2">Produits</h2>
+    <div class="bg-white rounded shadow overflow-hidden">
+        <table class="min-w-full table-auto">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left">Produit</th>
+                    <th class="p-3 text-left">Quantité</th>
+                    <th class="p-3 text-left">Prix unitaire</th>
+                    <th class="p-3 text-left">Sous-total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="border-b">
+                    <td class="p-3">{{ item.product.name }}</td>
+                    <td class="p-3">{{ item.quantity }}</td>
+                    <td class="p-3">{{ item.unit_price }} DH</td>
+                    <td class="p-3">{{ item.subtotal }} DH</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="text-xl font-semibold mt-6 mb-2">Paiements</h2>
+    <a href="{% url 'purchases:add_supplier_payment' purchase.id %}" class="inline-block mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Ajouter Paiement</a>
+    <div class="bg-white rounded shadow overflow-hidden">
+        <table class="min-w-full table-auto">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left">Date</th>
+                    <th class="p-3 text-left">Montant</th>
+                    <th class="p-3 text-left">Mode</th>
+                    <th class="p-3 text-left">Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr class="border-b">
+                    <td class="p-3">{{ payment.date }}</td>
+                    <td class="p-3">{{ payment.amount }} DH</td>
+                    <td class="p-3">{{ payment.get_payment_method_display }}</td>
+                    <td class="p-3">{{ payment.note|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if purchase.status == 'ordered' %}
+    <a href="{% url 'purchases:receive_purchase' purchase.id %}" class="inline-block mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Réceptionner la commande</a>
+    {% endif %}
+
+
+</div>
+{% endblock %}

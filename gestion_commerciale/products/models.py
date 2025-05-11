@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
@@ -27,6 +28,13 @@ class Product(models.Model):
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    default_warehouse = models.ForeignKey(
+        'inventory.Warehouse',  # ✅ Import différé par nom
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='default_products'
+    )
 
     is_active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='products/', blank=True, null=True)

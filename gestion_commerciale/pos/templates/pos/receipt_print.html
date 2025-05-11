@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Reçu POS</title>
+  <style>
+    @media print {
+      body { margin: 0; padding: 0; font-family: monospace; }
+      .ticket {
+        width: 80mm;
+        padding: 10px;
+      }
+    }
+    .ticket {
+      font-family: monospace;
+      width: 80mm;
+      margin: auto;
+    }
+    .text-center { text-align: center; }
+    .flex { display: flex; justify-content: space-between; }
+    hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="ticket">
+    <div class="text-center">
+      <h2>Mini Market POS</h2>
+      <p>{{ receipt.created_at }}</p>
+    </div>
+    <hr>
+    {% for item in items %}
+      <div class="flex">
+        <span>{{ item.product.name }} x{{ item.quantity }}</span>
+        <span>{{ item.quantity|floatformat:2 }} × {{ item.unit_price|floatformat:2 }} MAD</span>
+      </div>
+    {% endfor %}
+    <hr>
+    <div class="flex"><span>Sous-total:</span><span>{{ subtotal|floatformat:2 }} MAD</span></div>
+    <div class="flex"><span>TVA (20%):</span><span>{{ vat|floatformat:2 }} MAD</span></div>
+    <div class="flex"><strong>Total:</strong><strong>{{ total|floatformat:2 }} MAD</strong></div>
+    <div class="flex"><span>Payé:</span><span>{{ receipt.paid|floatformat:2 }} MAD</span></div>
+    <div class="flex"><span>Rendu:</span><span>{{ change|floatformat:2 }} MAD</span></div>
+    <hr>
+    <p class="text-center">Merci pour votre achat !</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold mb-6">Ajouter Paiement - Achat #{{ purchase.id }}</h1>
+    <form method="post" class="bg-white p-6 rounded shadow space-y-4">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div>
+            {{ form.amount.label_tag }} {{ form.amount }}
+        </div>
+        <div>
+            {{ form.payment_method.label_tag }} {{ form.payment_method }}
+        </div>
+        <div>
+            {{ form.note.label_tag }} {{ form.note }}
+        </div>
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold mb-6">Liste des Achats</h1>
+    <a href="{% url 'purchases:purchase_create' %}" class="mb-4 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Nouvel Achat</a>
+    <div class="bg-white shadow rounded">
+        <table class="min-w-full table-auto">
+            <thead class="bg-gray-100 text-left">
+                <tr>
+                    <th class="p-3">#</th>
+                    <th class="p-3">Fournisseur</th>
+                    <th class="p-3">Date</th>
+                    <th class="p-3">Montant Total</th>
+                    <th class="p-3">Payé</th>
+                    <th class="p-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for purchase in purchases %}
+                <tr class="border-b">
+                    <td class="p-3">{{ purchase.id }}</td>
+                    <td class="p-3">{{ purchase.supplier.name }}</td>
+                    <td class="p-3">{{ purchase.date }}</td>
+                    <td class="p-3">{{ purchase.total_amount }} DH</td>
+                    <td class="p-3">{{ purchase.amount_paid }} DH</td>
+                    <td class="p-3">
+                        <a href="{% url 'purchases:purchase_detail' purchase.pk %}" class="text-blue-600 hover:underline">
+                            Détail
+                        </a>
+                        <a href="{% url 'purchases:purchase_order_pdf' purchase.id %}" target="_blank" class="bg-indigo-600 text-white text-sm px-3 py-1 rounded hover:bg-indigo-700">
+                            Bon de commande
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="p-4 text-center text-gray-500">Aucun achat trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

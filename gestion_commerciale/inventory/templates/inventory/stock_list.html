@@ -2,9 +2,21 @@
 {% block content %}
 <div class="p-4">
     <h1 class="text-2xl font-bold mb-4">Liste des stocks</h1>
+
+    <form method="get" class="mb-4">
+        <label for="warehouse" class="mr-2">Filtrer par entrepôt :</label>
+        <select name="warehouse" id="warehouse" onchange="this.form.submit()" class="border rounded p-2">
+            <option value="">-- Tous les entrepôts --</option>
+            {% for wh in warehouses %}
+                <option value="{{ wh.id }}" {% if request.GET.warehouse == wh.id|stringformat:"s" %}selected{% endif %}>{{ wh.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
     <table class="min-w-full bg-white rounded shadow">
         <thead class="bg-gray-100">
             <tr>
+                <th class="py-2 px-4 text-left">Entrepôt</th>
                 <th class="py-2 px-4 text-left">Produit</th>
                 <th class="py-2 px-4 text-left">Quantité</th>
                 <th class="py-2 px-4 text-left">Seuil</th>
@@ -14,6 +26,7 @@
         <tbody>
             {% for stock in stocks %}
             <tr class="border-b">
+                <td class="py-2 px-4">{{ stock.warehouse.name }}</td>
                 <td class="py-2 px-4">{{ stock.product.name }}</td>
                 <td class="py-2 px-4">{{ stock.quantity }}</td>
                 <td class="py-2 px-4">{{ stock.reorder_threshold }}</td>
