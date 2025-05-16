@@ -104,3 +104,44 @@ def stock_create_or_update_view(request):
         form = StockForm()
 
     return render(request, 'inventory/stock_form.html', {'form': form})
+
+
+from .forms import StockTransferForm
+
+@login_required
+def stock_transfer_view(request):
+    if request.method == 'POST':
+        form = StockTransferForm(request.POST)
+        if form.is_valid():
+            transfer = form.save(commit=False)
+            transfer.movement_type = 'transfer'
+            transfer.user = request.user
+            transfer.date = timezone.now()
+            transfer.save()
+
+            from_stock, _ = Stock.objects.get_or_create(
+                product=transfer.product,
+                warehouse=transfer.from_warehouse,
+                defaults={'quantity': 0}
+            )
+            to_stock, _ = Stock.objects.get_or_create(
+                product=transfer.product,
+                warehouse=transfer.to_warehouse,
+                defaults={'quantity': 0}
+            )
+
+            if from_stock.quantity < transfer.quantity:
+                messages.error(request, f"Stock insuffisant dans {from_stock.warehouse.name}.")
+                return redirect('inventory:stock_transfer')
+
+            from_stock.quantity -= transfer.quantity
+            to_stock.quantity += transfer.quantity
+            from_stock.save()
+            to_stock.save()
+
+            messages.success(request, "Transfert effectué avec succès.")
+            return redirect('inventory:stock_movement_list')
+    else:
+        form = StockTransferForm()
+
+    return render(request, 'inventory/stock_transfer_form.html', {'form': form})

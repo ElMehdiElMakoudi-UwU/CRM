@@ -1,10 +1,121 @@
 {% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}{{ object|default_if_none:"Ajouter" }} un produit{% endblock %}
 {% block content %}
-<h2>{% if object %}Modifier{% else %}Ajouter{% endif %} un produit</h2>
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Enregistrer</button>
-</form>
-<a href="{% url 'products:product-list' %}">← Retour à la liste</a>
+<div class="max-w-4xl mx-auto py-6 px-4">
+  <h1 class="text-2xl font-bold mb-6">
+    {% if object %}🛠 Modifier{% else %}➕ Ajouter{% endif %} un produit
+  </h1>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
+
+    <!-- Groupe 1 : Infos générales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="id_name" class="block text-sm font-medium mb-1">Nom</label>
+        {{ form.name|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_reference" class="block text-sm font-medium mb-1">Référence</label>
+        {{ form.reference|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_barcode" class="block text-sm font-medium mb-1">Code-barres</label>
+        {{ form.barcode|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_category" class="block text-sm font-medium mb-1">Catégorie</label>
+        {{ form.category|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_brand" class="block text-sm font-medium mb-1">Marque</label>
+        {{ form.brand|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_unit" class="block text-sm font-medium mb-1">Unité</label>
+        {{ form.unit|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+    </div>
+
+    <!-- Groupe 2 : Prix & TVA -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label for="id_purchase_price" class="block text-sm font-medium mb-1">Prix d'achat (MAD)</label>
+        {{ form.purchase_price|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_selling_price" class="block text-sm font-medium mb-1">Prix de vente (MAD)</label>
+        {{ form.selling_price|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_tax_rate" class="block text-sm font-medium mb-1">TVA (%)</label>
+        {{ form.tax_rate|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+    </div>
+
+    <!-- Groupe 3 : Logistique -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="id_supplier" class="block text-sm font-medium mb-1">Fournisseur</label>
+        {{ form.supplier|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
+        <label for="id_default_warehouse" class="block text-sm font-medium mb-1">Dépôt par défaut</label>
+        {{ form.default_warehouse|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+    </div>
+
+    <!-- Groupe 4 : Divers -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="id_expiration_date" class="block text-sm font-medium mb-1">Date d'expiration</label>
+        {{ form.expiration_date|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div class="flex items-center gap-2 mt-6">
+        {{ form.is_featured }}
+        <label for="id_is_featured" class="text-sm font-medium">Produit en vedette</label>
+      </div>
+
+      <div class="flex items-center gap-2">
+        {{ form.is_active }}
+        <label for="id_is_active" class="text-sm font-medium">Actif</label>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label for="id_description" class="block text-sm font-medium mb-1">Description</label>
+      {{ form.description|add_class:"border border-gray-300 rounded w-full p-2" }}
+    </div>
+
+    <!-- Image -->
+    <div>
+      <label for="id_image" class="block text-sm font-medium mb-1">Image</label>
+      {{ form.image|add_class:"border border-gray-300 rounded w-full p-2" }}
+
+      {% if object.image %}
+      <div class="mt-2">
+        <p class="text-sm text-gray-500 mb-1">Image actuelle :</p>
+        <img src="{{ object.image.url }}" alt="Image produit" class="h-20 border rounded">
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Boutons -->
+    <div class="flex justify-between items-center mt-6">
+      <a href="{% url 'products:product-list' %}" class="text-sm text-gray-600 hover:text-indigo-600">← Retour à la liste</a>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded">💾 Enregistrer</button>
+    </div>
+  </form>
+</div>
 {% endblock %}

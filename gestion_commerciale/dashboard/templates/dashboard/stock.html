@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Statistiques Stock{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">📦 Statistiques de Stock</h1>
+
+<p class="text-lg mb-4">Valeur totale du stock : <strong>{{ total_value }}</strong></p>
+
+<h2 class="text-xl font-semibold mb-2">⚠️ Alertes de seuil</h2>
+<ul class="list-disc pl-6 mb-6">
+  {% for alert in alerts %}
+    <li>{{ alert.product.name }} — {{ alert.warehouse.name }} — {{ alert.message }}</li>
+  {% empty %}
+    <li>Aucune alerte active.</li>
+  {% endfor %}
+</ul>
+
+<h2 class="text-xl font-semibold mb-2">Répartition par dépôt</h2>
+<ul class="pl-6 list-disc">
+  {% for entry in stock_by_warehouse %}
+    <li>{{ entry.warehouse__name }} : {{ entry.total }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -3,13 +3,29 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Product, Category
 from .forms import ProductForm, CategoryForm
-
+from django.db import models
 
 class ProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = 'products/product_list.html'
     context_object_name = 'products'
 
+    def get_queryset(self):
+        qs = Product.objects.select_related('category').all()
+        q = self.request.GET.get('q', '').strip()
+        cat = self.request.GET.get('category')
+
+        if q:
+            qs = qs.filter(models.Q(name__icontains=q) | models.Q(reference__icontains=q))
+        if cat and cat.isdigit():
+            qs = qs.filter(category_id=cat)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.all()
+        return context
 
 class ProductCreateView(LoginRequiredMixin, CreateView):
     model = Product

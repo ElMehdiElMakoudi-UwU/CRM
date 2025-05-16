@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Statistiques Ventes{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">📈 Statistiques de Ventes</h1>
+
+<!-- Graphique -->
+<div class="bg-white rounded shadow p-4">
+  <canvas id="salesChart" class="w-full h-64"></canvas>
+</div>
+
+<!-- Données JSON injectées en toute sécurité -->
+{% json_script labels "sales-labels" %}
+{% json_script values "sales-values" %}
+
+<!-- Top produits -->
+<h2 class="text-xl font-semibold mt-10 mb-4">🏆 Top Produits</h2>
+<ul class="list-disc pl-6 space-y-1">
+  {% for product in top_products %}
+    <li>{{ product.name }} — {{ product.total_sales|default:"0" }}</li>
+  {% empty %}
+    <li>Aucune vente enregistrée.</li>
+  {% endfor %}
+</ul>
+
+<!-- Script Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = JSON.parse(document.getElementById('sales-labels').textContent);
+  const values = JSON.parse(document.getElementById('sales-values').textContent);
+
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Ventes par jour',
+        data: values,
+        backgroundColor: 'rgba(59,130,246,0.2)',
+        borderColor: 'rgba(59,130,246,1)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+{% endblock %}

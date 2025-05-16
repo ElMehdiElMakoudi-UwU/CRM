@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block title %}Produits{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-6">
-  <div class="flex justify-between items-center mb-4">
+<div class="max-w-7xl mx-auto px-4 py-6">
+  <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl font-semibold text-gray-800 flex items-center gap-2">
       <i data-lucide="box" class="w-6 h-6 text-indigo-600"></i> Produits
     </h2>
@@ -10,31 +13,64 @@
     </a>
   </div>
 
-  <div class="bg-white shadow rounded-lg overflow-hidden">
+  <!-- 🔍 Barre de recherche et filtre -->
+  <form method="get" class="flex flex-wrap gap-3 mb-4">
+    <input type="text" name="q" placeholder="Nom ou référence..." class="border border-gray-300 p-2 rounded w-full md:w-64" value="{{ request.GET.q }}">
+    <select name="category" class="border border-gray-300 p-2 rounded">
+      <option value="">Toutes catégories</option>
+      {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Filtrer</button>
+  </form>
+
+  <!-- 📦 Tableau produits -->
+  <div class="bg-white shadow rounded-lg overflow-x-auto">
     <table class="min-w-full text-sm text-gray-700">
       <thead class="bg-gray-100 text-xs uppercase">
         <tr>
+          <th class="px-4 py-3 text-left">Image</th>
           <th class="px-4 py-3 text-left">Nom</th>
-          <th class="px-4 py-3 text-left">Référence</th>
-          <th class="px-4 py-3 text-left">Prix</th>
+          <th class="px-4 py-3 text-left">Réf.</th>
           <th class="px-4 py-3 text-left">Catégorie</th>
+          <th class="px-4 py-3 text-left">Prix HT</th>
+          <th class="px-4 py-3 text-left">Prix TTC</th>
+          <th class="px-4 py-3 text-left">Stock</th>
+          <th class="px-4 py-3 text-left">Actif</th>
           <th class="px-4 py-3 text-left">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for product in products %}
-        <tr class="border-t">
-          <td class="px-4 py-3">{{ product.name }}</td>
+        <tr class="border-t hover:bg-gray-50">
+          <td class="px-4 py-3">
+            {% if product.image %}
+              <img src="{{ product.image.url }}" alt="image" class="h-10 w-10 object-cover rounded">
+            {% else %}
+              <div class="h-10 w-10 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">N/A</div>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 font-medium">{{ product.name }}</td>
           <td class="px-4 py-3">{{ product.reference }}</td>
-          <td class="px-4 py-3">{{ product.selling_price }} MAD</td>
           <td class="px-4 py-3">{{ product.category }}</td>
-          <td class="px-4 py-3 flex gap-2">
-            <a href="{% url 'products:product-update' product.pk %}" class="text-indigo-600 hover:underline">Modifier</a>
-            <a href="{% url 'products:product-delete' product.pk %}" class="text-red-600 hover:underline">Supprimer</a>
+          <td class="px-4 py-3">{{ product.selling_price|floatformat:2 }} MAD</td>
+          <td class="px-4 py-3">{{ product.price_with_tax|floatformat:2 }} MAD</td>
+          <td class="px-4 py-3">{{ product.current_stock }}</td>
+          <td class="px-4 py-3">
+            {% if product.is_active %}
+              <span class="text-green-600 font-semibold">✅</span>
+            {% else %}
+              <span class="text-red-500 font-semibold">❌</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 space-x-2">
+            <a href="{% url 'products:product-update' product.pk %}" class="text-indigo-600 hover:underline text-sm">Modifier</a>
+            <a href="{% url 'products:product-delete' product.pk %}" class="text-red-600 hover:underline text-sm">Supprimer</a>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Aucun produit disponible.</td></tr>
+        <tr><td colspan="9" class="text-center py-6 text-gray-400">Aucun produit trouvé.</td></tr>
         {% endfor %}
       </tbody>
     </table>

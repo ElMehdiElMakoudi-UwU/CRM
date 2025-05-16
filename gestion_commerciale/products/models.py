@@ -9,6 +9,7 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 class Product(models.Model):
     UNIT_CHOICES = [
         ('unit', 'Unité'),
@@ -19,6 +20,7 @@ class Product(models.Model):
 
     name = models.CharField(max_length=200)
     reference = models.CharField(max_length=100, unique=True)
+    barcode = models.CharField("Code-barres", max_length=100, blank=True, null=True, unique=True)
     description = models.TextField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
     brand = models.CharField(max_length=100, blank=True)
@@ -28,8 +30,12 @@ class Product(models.Model):
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+
+    expiration_date = models.DateField("Date d'expiration", blank=True, null=True)
+    is_featured = models.BooleanField("Produit en vedette", default=False)
+
     default_warehouse = models.ForeignKey(
-        'inventory.Warehouse',  # ✅ Import différé par nom
+        'inventory.Warehouse',
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -45,4 +51,14 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def price_with_tax(self):
+        return self.selling_price * (1 + self.tax_rate / 100)
 
+    @property
+    def current_stock(self):
+        from inventory.models import Stock
+        if self.default_warehouse:
+            stock = Stock.objects.filter(product=self, warehouse=self.default_warehouse).first()
+            return stock.quantity if stock else 0
+        return 0
