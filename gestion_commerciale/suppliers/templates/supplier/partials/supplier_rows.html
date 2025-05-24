@@ -1,0 +1,13 @@
+{% for supplier in suppliers %}
+<tr class="border-b hover:bg-gray-50">
+    <td class="py-2 px-2">{{ supplier.name }}</td>
+    <td class="px-2">{{ supplier.email }}</td>
+    <td class="px-2">{{ supplier.phone }}</td>
+    <td class="px-2">
+        <a href="{% url 'suppliers:supplier_update' supplier.pk %}" class="text-blue-500 hover:underline">Modifier</a> |
+        <a href="{% url 'suppliers:supplier_delete' supplier.pk %}" class="text-red-500 hover:underline">Supprimer</a>
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="4" class="py-4 text-center text-gray-500">Aucun fournisseur trouvé.</td></tr>
+{% endfor %}

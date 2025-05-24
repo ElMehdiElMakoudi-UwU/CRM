@@ -28,10 +28,57 @@ from configuration.models import CompanySettings
 from django.utils import timezone
 from .models import Purchase
 
-# Liste des achats
-def purchase_list(request):
-    purchases = Purchase.objects.select_related("supplier").all().order_by("-date")
-    return render(request, "purchases/purchase_list.html", {"purchases": purchases})
+from django.shortcuts import render
+from django.db.models import Q, F
+from .models import Purchase
+from suppliers.models import Supplier
+from datetime import datetime
+
+def purchase_list_view(request):
+    purchases = Purchase.objects.select_related('supplier').all()
+    suppliers = Supplier.objects.all()
+
+    # --- Filtres ---
+    supplier_id = request.GET.get('supplier')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if supplier_id:
+        purchases = purchases.filter(supplier_id=supplier_id)
+
+    if start_date:
+        try:
+            purchases = purchases.filter(date__gte=datetime.strptime(start_date, "%Y-%m-%d"))
+        except:
+            pass
+
+    if end_date:
+        try:
+            purchases = purchases.filter(date__lte=datetime.strptime(end_date, "%Y-%m-%d"))
+        except:
+            pass
+
+    # --- Tri ---
+    sort = request.GET.get('sort')
+    if sort == 'montant':
+        purchases = purchases.order_by('-total_amount')
+    elif sort == 'statut':
+        purchases = purchases.annotate(
+            is_paid=F('amount_paid') >= F('total_amount')
+        ).order_by('-is_paid')
+    else:
+        purchases = purchases.order_by('-date')
+
+    return render(request, 'purchases/purchase_list.html', {
+        'purchases': purchases,
+        'suppliers': suppliers,
+        'filters': {
+            'supplier': supplier_id,
+            'start_date': start_date,
+            'end_date': end_date,
+            'sort': sort,
+        }
+    })
 
 # Détail d’un achat
 def purchase_detail(request, pk):

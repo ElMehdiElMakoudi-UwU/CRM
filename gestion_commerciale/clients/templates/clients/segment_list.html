@@ -1,18 +1,40 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Segments Clients</h1>
-<ul class="space-y-2">
-  {% for segment in segments %}
-  <li class="border-b py-2">
-    <strong>{{ segment.name }}</strong> — {{ segment.description }}
-    <div class="text-sm mt-1">
-      <a href="{% url 'clients:segment_update' segment.pk %}" class="text-green-600 hover:underline">Modifier</a> |
-      <a href="{% url 'clients:segment_delete' segment.pk %}" class="text-red-600 hover:underline">Supprimer</a>
+<div class="p-4 max-w-4xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Segments Clients</h1>
+    <a href="{% url 'clients:segment_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      + Ajouter un Segment
+    </a>
+  </div>
+
+  {% if segments %}
+    <div class="space-y-4">
+      {% for segment in segments %}
+      <div class="bg-white border rounded shadow p-4 hover:shadow-md transition">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-semibold">
+              {{ segment.name }}
+              <span class="ml-2 text-sm text-gray-500">({{ segment.client_count }} client{{ segment.client_count|pluralize }})</span>
+            </h2>
+
+            {% if segment.description %}
+              <p class="text-gray-600 mt-1">{{ segment.description }}</p>
+            {% else %}
+              <p class="text-gray-400 text-sm italic">Aucune description</p>
+            {% endif %}
+          </div>
+          <div class="text-sm space-x-2">
+            <a href="{% url 'clients:segment_update' segment.pk %}" class="text-green-600 hover:underline">✏ Modifier</a>
+            <a href="{% url 'clients:segment_delete' segment.pk %}" class="text-red-600 hover:underline">🗑 Supprimer</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
-  </li>
-  {% empty %}
-  <li>Aucun segment défini.</li>
-  {% endfor %}
-</ul>
-<a href="{% url 'clients:segment_create' %}" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Ajouter un Segment</a>
+  {% else %}
+    <div class="text-gray-500 italic">Aucun segment défini.</div>
+  {% endif %}
+</div>
 {% endblock %}

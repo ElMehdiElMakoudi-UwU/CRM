@@ -1,15 +1,22 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="p-4">
-    <h1 class="text-2xl font-bold mb-4">Alertes de stock faible</h1>
-    <ul class="space-y-2">
-        {% for alert in alerts %}
-        <li class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-            <p><strong>{{ alert.product.name }}</strong> — {{ alert.message }} ({{ alert.created_at|date:"Y-m-d H:i" }})</p>
-        </li>
-        {% empty %}
-        <p class="text-gray-600">Aucune alerte active.</p>
-        {% endfor %}
+<div class="p-4 max-w-4xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">🚨 Alertes de Stock Faible</h1>
+
+  {% if alerts %}
+    <ul class="space-y-3">
+      {% for alert in alerts %}
+      <li class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded shadow-sm">
+        <div class="font-semibold text-base">{{ alert.product.name }}</div>
+        <div class="text-sm mt-1">{{ alert.message }}</div>
+        <div class="text-xs text-red-600 mt-2 italic">
+          Générée le {{ alert.created_at|date:"d/m/Y à H:i" }}
+        </div>
+      </li>
+      {% endfor %}
     </ul>
+  {% else %}
+    <div class="text-center text-gray-500 italic mt-8">✅ Aucune alerte active. Tous les stocks sont au-dessus du seuil.</div>
+  {% endif %}
 </div>
 {% endblock %}

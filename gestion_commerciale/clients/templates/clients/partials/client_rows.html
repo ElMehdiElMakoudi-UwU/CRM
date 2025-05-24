@@ -1,0 +1,17 @@
+{% for client in clients %}
+<tr class="border-t hover:bg-gray-50">
+  <td class="px-4 py-2">{{ client.name }}</td>
+  <td class="px-4 py-2">{{ client.phone }}</td>
+  <td class="px-4 py-2">{{ client.email }}</td>
+  <td class="px-4 py-2 font-medium {% if client.balance < 0 %}text-red-600{% else %}text-green-600{% endif %}">
+    {{ client.balance }} MAD
+  </td>
+  <td class="px-4 py-2">
+    <a href="{% url 'clients:client_detail' client.pk %}" class="text-blue-600 hover:underline">Voir</a> |
+    <a href="{% url 'clients:client_update' client.pk %}" class="text-green-600 hover:underline">Modifier</a> |
+    <a href="{% url 'clients:client_delete' client.pk %}" class="text-red-600 hover:underline">Supprimer</a>
+  </td>
+</tr>
+{% empty %}
+<tr><td colspan="5" class="text-center py-4 text-gray-500">Aucun client trouvé.</td></tr>
+{% endfor %}

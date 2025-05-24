@@ -7,8 +7,22 @@ from .forms import SupplierForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 # Gestion des Fournisseurs
 # ------------------------
 
+from django.shortcuts import render
+from .models import Supplier
+from django.db.models import Q
+
 def supplier_list(request):
+    search_query = request.GET.get('search', '')
     suppliers = Supplier.objects.all()
+
+    if search_query:
+        suppliers = suppliers.filter(
+            Q(name__icontains=search_query) | Q(email__icontains=search_query)
+        )
+
+    if request.htmx:
+        return render(request, 'supplier/partials/supplier_rows.html', {'suppliers': suppliers})
+
     return render(request, 'supplier/supplier_list.html', {'suppliers': suppliers})
 
 def supplier_create(request):

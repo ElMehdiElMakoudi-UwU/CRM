@@ -4,7 +4,7 @@ from . import views
 app_name = 'purchases'
 
 urlpatterns = [
-    path("", views.purchase_list, name="purchase_list"),
+    path("", views.purchase_list_view, name="purchase_list"),  # ← ici le correctif
     path("new/", views.purchase_create, name="purchase_create"),
     path("<int:pk>/", views.purchase_detail, name="purchase_detail"),
     path("<int:purchase_id>/add-payment/", views.add_supplier_payment, name="add_supplier_payment"),

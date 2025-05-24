@@ -1,14 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Détails du Client</h1>
-<ul class="space-y-2">
-  <li><strong>Nom :</strong> {{ client.name }}</li>
-  <li><strong>Téléphone :</strong> {{ client.phone }}</li>
-  <li><strong>Email :</strong> {{ client.email }}</li>
-  <li><strong>Adresse :</strong> {{ client.address }}</li>
-  <li><strong>Segment :</strong> {{ client.segment }}</li>
-  <li><strong>Solde :</strong> {{ client.balance }} MAD</li>
-</ul>
-<a href="{% url 'clients:client_update' client.pk %}" class="inline-block mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Modifier</a>
-<a href="{% url 'clients:client_list' %}" class="ml-2 inline-block text-gray-600 underline">← Retour à la liste</a>
+<div class="p-4 max-w-2xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6">Détails du Client</h1>
+
+  <div class="bg-white shadow rounded p-6 space-y-3 text-sm">
+    <div><strong>👤 Nom :</strong> {{ client.name }}</div>
+    <div><strong>📞 Téléphone :</strong> {{ client.phone|default:"-" }}</div>
+    <div><strong>✉️ Email :</strong> {{ client.email|default:"-" }}</div>
+    <div><strong>🏠 Adresse :</strong> {{ client.address|linebreaksbr|default:"-" }}</div>
+    <div><strong>📂 Segment :</strong> {{ client.segment.name|default:"Non défini" }}</div>
+    <div>
+      <strong>💰 Solde :</strong>
+      {% if client.balance > client.alert_threshold %}
+        <span class="text-red-600 font-semibold">{{ client.balance }} MAD</span>
+        <span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded">⚠ Dépassement</span>
+      {% else %}
+        <span class="text-green-600 font-semibold">{{ client.balance }} MAD</span>
+      {% endif %}
+    </div>
+    <div><strong>📈 Seuil d'alerte :</strong> {{ client.alert_threshold }} MAD</div>
+    <div><strong>🕒 Créé le :</strong> {{ client.created_at|date:"d/m/Y à H:i" }}</div>
+  </div>
+
+  <div class="mt-6 flex gap-4">
+    <a href="{% url 'clients:client_update' client.pk %}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      ✏ Modifier
+    </a>
+    <a href="{% url 'clients:client_list' %}" class="text-gray-600 hover:underline">← Retour à la liste</a>
+  </div>
+</div>
 {% endblock %}

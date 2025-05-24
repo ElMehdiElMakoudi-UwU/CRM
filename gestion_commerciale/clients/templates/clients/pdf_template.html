@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Helvetica, sans-serif;
+      font-size: 12px;
+      margin: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #999;
+      padding: 6px 3px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    /* Fixe les largeurs pour éviter l’écrasement */
+    .col-name     { width: 20%; }
+    .col-phone    { width: 15%; }
+    .col-email    { width: 30%; word-wrap: break-word; }
+    .col-balance  { width: 15%; }
+    .col-segment  { width: 20%; }
+  </style>
+</head>
+<body>
+  <h1>Liste des Clients</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-name">Nom</th>
+        <th class="col-phone">Téléphone</th>
+        <th class="col-email">Email</th>
+        <th class="col-balance">Solde</th>
+        <th class="col-segment">Segment</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for client in clients %}
+      <tr>
+        <td class="col-name">{{ client.name }}</td>
+        <td class="col-phone">{{ client.phone }}</td>
+        <td class="col-email">{{ client.email }}</td>
+        <td class="col-balance">{{ client.balance }} MAD</td>
+        <td class="col-segment">{{ client.segment }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

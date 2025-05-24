@@ -1,35 +1,53 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="p-6">
-  <h1 class="text-2xl font-bold mb-4">Liste des ventes</h1>
-  <a href="{% url 'sales:sale_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Nouvelle vente</a>
+<div class="p-6 max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">🧾 Liste des Ventes</h1>
+    <a href="{% url 'sales:sale_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      + Nouvelle vente
+    </a>
+  </div>
 
-  <div class="mt-6 bg-white shadow rounded-lg overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
+  <div class="bg-white shadow rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50">
         <tr>
-          <th class="px-4 py-2 text-left text-sm font-semibold">#</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold">Client</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold">Date</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold">Montant total</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold">Payé</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold">Actions</th>
+          <th class="px-4 py-2 text-left font-semibold">#</th>
+          <th class="px-4 py-2 text-left font-semibold">Client</th>
+          <th class="px-4 py-2 text-left font-semibold">Date</th>
+          <th class="px-4 py-2 text-left font-semibold">Montant total</th>
+          <th class="px-4 py-2 text-left font-semibold">Payé</th>
+          <th class="px-4 py-2 text-left font-semibold">Statut</th>
+          <th class="px-4 py-2 text-left font-semibold">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         {% for sale in sales %}
-        <tr>
+        <tr class="hover:bg-gray-50">
           <td class="px-4 py-2">{{ sale.id }}</td>
           <td class="px-4 py-2">{{ sale.client }}</td>
-          <td class="px-4 py-2">{{ sale.date|date:"Y-m-d H:i" }}</td>
+          <td class="px-4 py-2">{{ sale.date|date:"d/m/Y H:i" }}</td>
           <td class="px-4 py-2">{{ sale.total_amount }} MAD</td>
           <td class="px-4 py-2">{{ sale.amount_paid }} MAD</td>
           <td class="px-4 py-2">
+            {% if sale.amount_paid < sale.total_amount %}
+              <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">Partiellement payé</span>
+            {% else %}
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Payé</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 space-x-2">
             <a href="{% url 'sales:sale_detail' sale.id %}" class="text-blue-600 hover:underline">Voir</a>
+            <!--
+            <a href="{% url 'sales:sale_invoice' sale.id %}" class="text-gray-600 hover:underline">🖨️ Imprimer</a>
+            <a href="{% url 'sales:sale_delete' sale.id %}" class="text-red-600 hover:underline">Supprimer</a>
+            -->
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="px-4 py-4 text-center text-gray-500">Aucune vente enregistrée.</td></tr>
+        <tr>
+          <td colspan="7" class="text-center text-gray-500 py-6">Aucune vente enregistrée.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

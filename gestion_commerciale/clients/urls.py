@@ -10,6 +10,10 @@ urlpatterns = [
     path('<int:pk>/', views.ClientDetailView.as_view(), name='client_detail'),
     path('<int:pk>/update/', views.ClientUpdateView.as_view(), name='client_update'),
     path('<int:pk>/delete/', views.ClientDeleteView.as_view(), name='client_delete'),
+    path('export/excel/', views.client_export_excel, name='client_export_excel'),
+    path('export/pdf/', views.client_export_pdf, name='client_export_pdf'),
+
+
 
     # Segments
     path('segments/', views.SegmentListView.as_view(), name='segment_list'),

@@ -17,10 +17,54 @@ def stock_list_view(request):
     warehouses = Warehouse.objects.all()
     return render(request, 'inventory/stock_list.html', {'stocks': stocks, 'warehouses': warehouses})
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from .models import StockMovement, Product, Warehouse
+from datetime import datetime
+
 @login_required
 def stock_movement_list_view(request):
-    movements = StockMovement.objects.select_related('product', 'warehouse', 'user').order_by('-date')
-    return render(request, 'inventory/stock_movement_list.html', {'movements': movements})
+    movements = StockMovement.objects.select_related('product', 'warehouse', 'user', 'from_warehouse', 'to_warehouse').order_by('-date')
+
+    # Filtres
+    product_id = request.GET.get('product')
+    warehouse_id = request.GET.get('warehouse')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if product_id:
+        movements = movements.filter(product_id=product_id)
+
+    if warehouse_id:
+        movements = movements.filter(Q(warehouse_id=warehouse_id) | Q(from_warehouse_id=warehouse_id) | Q(to_warehouse_id=warehouse_id))
+
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            movements = movements.filter(date__gte=start)
+        except:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+            movements = movements.filter(date__lte=end)
+        except:
+            pass
+
+    context = {
+        'movements': movements,
+        'products': Product.objects.all(),
+        'warehouses': Warehouse.objects.all(),
+        'filter_values': {
+            'product': product_id,
+            'warehouse': warehouse_id,
+            'start_date': start_date,
+            'end_date': end_date
+        }
+    }
+    return render(request, 'inventory/stock_movement_list.html', context)
 
 @login_required
 def stock_movement_create_view(request):
