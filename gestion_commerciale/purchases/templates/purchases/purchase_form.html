@@ -1,57 +1,65 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% block content %}
 <div class="p-6 max-w-5xl mx-auto space-y-6">
-  <h1 class="text-2xl font-bold">Nouvel achat</h1>
+  <h1 class="text-3xl font-bold text-gray-800">🧾 Nouvel achat</h1>
 
-  <form method="POST" id="purchase-form" action="{% url 'purchases:purchase_create' %}">
+  <form method="POST" id="purchase-form" action="{% url 'purchases:purchase_create' %}" class="space-y-6">
     {% csrf_token %}
 
     <!-- Fournisseur Info -->
-    <div class="bg-white p-4 rounded shadow">
-      <h2 class="text-lg font-semibold mb-2">Fournisseur</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">📇 Fournisseur</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          {{ form.supplier.label_tag }} {{ form.supplier }}
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.supplier.label }}</label>
+          {{ form.supplier|add_class:"w-full border-gray-300 rounded px-3 py-2 border focus:ring focus:ring-blue-200" }}
         </div>
         <div>
-          {{ form.status.label_tag }} {{ form.status }}
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.status.label }}</label>
+          {{ form.status|add_class:"w-full border-gray-300 rounded px-3 py-2 border focus:ring focus:ring-blue-200" }}
         </div>
-        <div class="col-span-2">
-          {{ form.notes.label_tag }} {{ form.notes }}
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.notes.label }}</label>
+          {{ form.notes|add_class:"w-full border-gray-300 rounded px-3 py-2 border focus:ring focus:ring-blue-200" }}
         </div>
       </div>
     </div>
 
     <!-- Product List Table -->
-    <div class="bg-white p-4 rounded shadow">
+    <div class="bg-white p-6 rounded-lg shadow-md">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold">Produits</h2>
-        <button type="button" id="open-product-modal" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+        <h2 class="text-xl font-semibold text-gray-700">📦 Produits</h2>
+        <button type="button" id="open-product-modal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           + Ajouter un produit
         </button>
       </div>
-      <table class="w-full text-sm text-left">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="p-2">Produit</th>
-            <th class="p-2 w-24">Quantité</th>
-            <th class="p-2 w-28">Prix unitaire</th>
-            <th class="p-2 w-28">Total</th>
-            <th class="p-2 w-12"></th>
-          </tr>
-        </thead>
-        <tbody id="product-table-body">
-          <!-- Rows will be inserted here via JS -->
-        </tbody>
-      </table>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left border border-gray-200 rounded">
+          <thead class="bg-gray-50 text-gray-700 font-medium">
+            <tr>
+              <th class="p-2">Produit</th>
+              <th class="p-2 w-24 text-center">Quantité</th>
+              <th class="p-2 w-28 text-center">Prix unitaire</th>
+              <th class="p-2 w-28 text-center">Total</th>
+              <th class="p-2 w-12"></th>
+            </tr>
+          </thead>
+          <tbody id="product-table-body" class="divide-y divide-gray-200">
+            <!-- Rows via JS -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Champs caché pour envoyer les produits -->
     <input type="hidden" name="products_data" id="products-data">
 
     <!-- Submit -->
-    <div class="mt-6 text-right">
-      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Enregistrer l'achat</button>
+    <div class="text-right pt-4">
+      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+        💾 Enregistrer l'achat
+      </button>
     </div>
   </form>
 </div>
@@ -60,22 +68,26 @@
 <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-start z-50">
   <div class="bg-white mt-20 max-w-3xl w-full rounded-lg shadow-lg p-6">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-bold">Sélectionner un produit</h3>
-      <button type="button" id="close-product-modal" class="text-gray-500 hover:text-red-600">&#10005;</button>
+      <h3 class="text-lg font-bold text-gray-800">🔍 Sélectionner un produit</h3>
+      <button type="button" id="close-product-modal" class="text-gray-500 hover:text-red-600 text-xl">&times;</button>
     </div>
-    <select id="product-category-filter" class="mb-4 w-full border px-2 py-1 rounded">
+
+    <select id="product-category-filter" class="mb-4 w-full border border-gray-300 px-3 py-2 rounded">
       <option value="">-- Filtrer par catégorie --</option>
       {% for cat in categories %}
       <option value="{{ cat.id }}">{{ cat.name }}</option>
       {% endfor %}
     </select>
-    <input type="text" id="product-search" placeholder="Rechercher..." class="w-full mb-4 px-3 py-2 border rounded">
+
+    <input type="text" id="product-search" placeholder="Rechercher un produit..." class="w-full mb-4 px-3 py-2 border border-gray-300 rounded" />
+
     <div id="product-list" class="space-y-2 max-h-[300px] overflow-y-auto">
-      <!-- Products will be loaded via AJAX here -->
+      <!-- Products AJAX -->
     </div>
   </div>
 </div>
 
+<!-- Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('product-modal');
@@ -98,13 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.add('hidden');
   });
 
-  searchInput.addEventListener('input', () => {
-    loadProducts();
-  });
-
-  categoryFilter.addEventListener('change', () => {
-    loadProducts();
-  });
+  searchInput.addEventListener('input', () => loadProducts());
+  categoryFilter.addEventListener('change', () => loadProducts());
 
   function loadProducts() {
     const query = searchInput.value;
@@ -114,22 +121,27 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        productList.innerHTML = '';
         productList.innerHTML = data.html;
       });
   }
 
+  window.handleAddProduct = function(button) {
+    const id = parseInt(button.dataset.id);
+    const name = button.dataset.name;
+    const price = parseFloat(button.dataset.price);
+    addProductToTable(id, name, price);
+  };
+
   window.addProductToTable = function(id, name, price) {
     if (selectedProducts.includes(id)) return;
-
     selectedProducts.push(id);
 
     const row = document.createElement('tr');
     row.innerHTML = `
       <td class="p-2">${name}</td>
-      <td class="p-2"><input type="number" name="quantities[]" value="1" min="1" class="w-20 border rounded px-1 py-0.5 text-right qty"></td>
-      <td class="p-2"><input type="number" name="unit_prices[]" value="${price}" class="w-24 border rounded px-1 py-0.5 text-right unit"></td>
-      <td class="p-2 total-cell text-right">${price}</td>
+      <td class="p-2"><input type="number" value="1" min="1" class="qty w-20 border rounded px-1 py-0.5 text-right"></td>
+      <td class="p-2"><input type="number" value="${price}" class="unit w-24 border rounded px-1 py-0.5 text-right"></td>
+      <td class="p-2 total-cell text-right">${price.toFixed(2)}</td>
       <td class="p-2"><button type="button" class="text-red-600 remove-row">&#10005;</button></td>
     `;
 
@@ -150,8 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateRowTotal(row) {
     const qty = parseFloat(row.querySelector('.qty').value) || 0;
     const unit = parseFloat(row.querySelector('.unit').value) || 0;
-    const total = qty * unit;
-    row.querySelector('.total-cell').textContent = total.toFixed(2);
+    row.querySelector('.total-cell').textContent = (qty * unit).toFixed(2);
     updateProductsData();
   }
 
@@ -161,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = row.cells[0].textContent;
       const qty = row.querySelector('.qty').value;
       const price = row.querySelector('.unit').value;
-      const productId = selectedProducts.find(pid => name.includes('')); // basic fallback
+      const productId = selectedProducts.find(id => name.includes('')); // placeholder fallback
       data.push({ product_id: productId, quantity: qty, unit_price: price });
     });
     hiddenInput.value = JSON.stringify(data);

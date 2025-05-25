@@ -10,7 +10,7 @@ class Sale(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    is_credit = models.BooleanField(default=False)
+    is_credit = models.BooleanField(default=False, blank=True)
     notes = models.TextField(blank=True, null=True)
     
     def get_balance_due(self):

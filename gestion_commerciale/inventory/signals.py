@@ -9,7 +9,10 @@ def update_stock_on_movement(sender, instance, created, **kwargs):
     if not created:
         return
 
-    stock, _ = Stock.objects.get_or_create(product=instance.product)
+    stock, _ = Stock.objects.get_or_create(
+        product=instance.product,
+        warehouse=instance.warehouse
+    )
 
     # S’assurer que stock.quantity est bien initialisé
     if stock.quantity is None:

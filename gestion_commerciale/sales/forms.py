@@ -5,7 +5,7 @@ from django.forms.models import inlineformset_factory
 class SaleForm(forms.ModelForm):
     class Meta:
         model = Sale
-        fields = ['client', 'notes', 'is_credit']
+        fields = ['client', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3, 'class': 'w-full'}),
         }

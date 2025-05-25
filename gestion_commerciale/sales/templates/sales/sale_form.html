@@ -1,99 +1,111 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% block content %}
-<div class="p-6 max-w-5xl mx-auto space-y-6">
-  <h1 class="text-2xl font-bold">Nouvelle vente</h1>
+<div class="p-6 max-w-6xl mx-auto space-y-8">
+  <h1 class="text-3xl font-bold text-gray-800">🧾 Nouvelle vente</h1>
 
-  <form method="POST" id="sale-form" action="{% url 'sales:sale_create' %}">
+  <form method="POST" id="sale-form" action="{% url 'sales:sale_create' %}" class="space-y-6">
     {% csrf_token %}
 
-    <!-- Client Info -->
-    <div class="bg-white p-4 rounded shadow">
-      <h2 class="text-lg font-semibold mb-2">Client</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Section: Client -->
+    <div class="bg-white p-6 rounded shadow-md">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">👤 Client</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          {{ form.client.label_tag }} {{ form.client }}
+          {{ form.client.label_tag }} 
+          {{ form.client|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
         <div>
-          {{ form.is_credit.label_tag }} {{ form.is_credit }}
+          {{ form.is_credit.label_tag }} 
+          {{ form.is_credit|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
-        <div class="col-span-2">
-          {{ form.notes.label_tag }} {{ form.notes }}
+        <div class="md:col-span-2">
+          {{ form.notes.label_tag }} 
+          {{ form.notes|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
       </div>
     </div>
 
-    <!-- Product List Table -->
-    <div class="bg-white p-4 rounded shadow">
+    <!-- Section: Produits -->
+    <div class="bg-white p-6 rounded shadow-md">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold">Produits</h2>
-        <button type="button" id="open-product-modal" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+        <h2 class="text-xl font-semibold text-gray-700">📦 Produits</h2>
+        <button type="button" id="open-product-modal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           + Ajouter un produit
         </button>
       </div>
-      <table class="w-full text-sm text-left">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="p-2">Produit</th>
-            <th class="p-2 w-24">Quantité</th>
-            <th class="p-2 w-28">Prix unitaire</th>
-            <th class="p-2 w-28">Total</th>
-            <th class="p-2 w-12"></th>
-          </tr>
-        </thead>
-        <tbody id="product-table-body">
-          <!-- Rows will be inserted here via JS -->
-        </tbody>
-      </table>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left border border-gray-200 rounded">
+          <thead class="bg-gray-100 text-gray-700">
+            <tr>
+              <th class="p-2">Produit</th>
+              <th class="p-2 text-center w-24">Quantité</th>
+              <th class="p-2 text-center w-28">Prix unitaire</th>
+              <th class="p-2 text-center w-28">Total</th>
+              <th class="p-2 w-12"></th>
+            </tr>
+          </thead>
+          <tbody id="product-table-body" class="divide-y divide-gray-200">
+            <!-- JavaScript rows -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Totals -->
-    <div class="bg-white p-4 rounded shadow">
-      <h2 class="text-lg font-semibold mb-2">Paiement</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Section: Paiement -->
+    <div class="bg-white p-6 rounded shadow-md">
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">💰 Paiement</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label class="block font-semibold">Montant total :</label>
-          <input id="total-global" name="total_amount" readonly class="w-full bg-gray-100 text-right px-2 py-1 rounded">
+          <label class="block font-medium text-gray-700 mb-1">Montant total</label>
+          <input id="total-global" name="total_amount" readonly class="w-full bg-gray-100 text-right px-3 py-2 rounded">
         </div>
         <div>
-          {{ payment_form.amount.label_tag }} {{ payment_form.amount }}
+          {{ payment_form.amount.label_tag }} 
+          {{ payment_form.amount|add_class:"w-full border-gray-300 rounded px-3 py-2 border text-right" }}
         </div>
         <div>
-          {{ payment_form.method.label_tag }} {{ payment_form.method }}
+          {{ payment_form.method.label_tag }} 
+          {{ payment_form.method|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
         <div>
-          <label class="block font-semibold">Montant restant :</label>
-          <input id="montant-restant" readonly class="w-full bg-gray-100 text-right px-2 py-1 rounded">
+          <label class="block font-medium text-gray-700 mb-1">Montant restant</label>
+          <input id="montant-restant" readonly class="w-full bg-gray-100 text-right px-3 py-2 rounded">
         </div>
       </div>
     </div>
 
-    <!-- Submit -->
-    <div class="mt-6 text-right">
-      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Enregistrer la vente</button>
+    <!-- Bouton -->
+    <div class="text-right">
+      <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+        💾 Enregistrer la vente
+      </button>
     </div>
   </form>
 </div>
 
-<!-- Modal: Product Selector -->
+<!-- Modal: Sélecteur de produit -->
 <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-start z-50">
   <div class="bg-white mt-20 max-w-3xl w-full rounded-lg shadow-lg p-6">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-bold">Sélectionner un produit</h3>
-      <button type="button" id="close-product-modal" class="text-gray-500 hover:text-red-600">&#10005;</button>
+      <h3 class="text-lg font-bold text-gray-800">🔍 Sélectionner un produit</h3>
+      <button type="button" id="close-product-modal" class="text-gray-500 hover:text-red-600 text-xl">&times;</button>
     </div>
-    <select id="product-category-filter" class="mb-4 w-full border px-2 py-1 rounded">
+    <select id="product-category-filter" class="mb-4 w-full border border-gray-300 px-3 py-2 rounded">
       <option value="">-- Filtrer par catégorie --</option>
       {% for cat in categories %}
       <option value="{{ cat.id }}">{{ cat.name }}</option>
       {% endfor %}
     </select>
-    <input type="text" id="product-search" placeholder="Rechercher..." class="w-full mb-4 px-3 py-2 border rounded">
+    <input type="text" id="product-search" placeholder="Rechercher..." class="w-full mb-4 px-3 py-2 border border-gray-300 rounded">
     <div id="product-list" class="space-y-2 max-h-[300px] overflow-y-auto">
-      <!-- Products will be loaded via AJAX here -->
+      <!-- AJAX results -->
     </div>
   </div>
 </div>
 
+<!-- Script JS -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('product-modal');
@@ -118,13 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.add('hidden');
   });
 
-  searchInput.addEventListener('input', () => {
-    loadProducts();
-  });
-
-  categoryFilter.addEventListener('change', () => {
-    loadProducts();
-  });
+  searchInput.addEventListener('input', loadProducts);
+  categoryFilter.addEventListener('change', loadProducts);
 
   function loadProducts() {
     const query = searchInput.value;
@@ -158,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function addProductToTable(product) {
     if (selectedProducts.includes(product.id)) return;
-
     selectedProducts.push(product.id);
 
     const row = document.createElement('tr');
@@ -187,8 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateRowTotal(row) {
     const qty = parseFloat(row.querySelector('input[name="quantities[]"]').value) || 0;
     const price = parseFloat(row.querySelector('input[name="unit_prices[]"]').value) || 0;
-    const total = qty * price;
-    row.querySelector('.total-cell').textContent = total.toFixed(2);
+    row.querySelector('.total-cell').textContent = (qty * price).toFixed(2);
     updateTotals();
   }
 

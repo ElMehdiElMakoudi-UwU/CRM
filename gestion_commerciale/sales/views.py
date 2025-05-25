@@ -7,9 +7,39 @@ from .forms import SaleForm, SaleItemFormSet, PaymentForm
 from inventory.models import Stock, StockMovement
 from clients.models import Client
 
+from django.db.models import Q
+from datetime import datetime
+
 def sale_list(request):
     sales = Sale.objects.select_related('client').order_by('-date')
-    return render(request, 'sales/sale_list.html', {'sales': sales})
+
+    query = request.GET.get('q')
+    date_filter = request.GET.get('date_filter')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if query:
+        sales = sales.filter(client__name__icontains=query)
+
+    if date_filter == 'today':
+        today = datetime.today().date()
+        sales = sales.filter(date__date=today)
+    elif date_filter == 'month':
+        today = datetime.today().date()
+        sales = sales.filter(date__month=today.month, date__year=today.year)
+    elif start_date and end_date:
+        sales = sales.filter(date__date__range=[start_date, end_date])
+
+    return render(request, 'sales/sale_list.html', {
+        'sales': sales,
+        'filters': {
+            'q': query or '',
+            'date_filter': date_filter or '',
+            'start_date': start_date or '',
+            'end_date': end_date or '',
+        }
+    })
+
 
 def sale_detail(request, pk):
     sale = get_object_or_404(Sale, pk=pk)
@@ -20,6 +50,29 @@ def sale_detail(request, pk):
         'items': items,
         'payments': payments
     })
+
+from django.template.loader import get_template
+from django.http import HttpResponse
+from xhtml2pdf import pisa
+from .models import Sale
+from django.shortcuts import get_object_or_404
+
+def sale_invoice_pdf(request, pk):
+    sale = get_object_or_404(Sale, pk=pk)
+    template = get_template("sales/invoice_pdf.html")
+
+    html = template.render({
+        "sale": sale,
+        "company": request.user.company if hasattr(request.user, 'company') else None  # optionnel
+    })
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'filename="facture_{sale.id}.pdf"'
+
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse("Erreur lors de la génération du PDF", status=500)
+    return response
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -66,7 +119,6 @@ def sale_create(request):
 
         if form.is_valid() and payment_form.is_valid() and product_ids:
             client = form.cleaned_data['client']
-            is_credit = form.cleaned_data['is_credit']
             notes = form.cleaned_data['notes']
             amount_paid = payment_form.cleaned_data['amount']
 
@@ -76,7 +128,6 @@ def sale_create(request):
                 date=timezone.now(),
                 total_amount=0,  # temp, will override later
                 amount_paid=amount_paid,
-                is_credit=is_credit,
                 notes=notes,
             )
 

@@ -4,8 +4,11 @@
     <p class="font-semibold">{{ product.name }}</p>
     <p class="text-sm text-gray-500">{{ product.purchase_price }} DH</p>
   </div>
-  <button class="bg-blue-600 text-white px-3 py-1 rounded"
-          onclick="addProductToTable({{ product.id }}, '{{ product.name|escapejs }}', {{ product.purchase_price|default:0 }})">
+  <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+          data-id="{{ product.id }}"
+          data-name="{{ product.name|escapejs }}"
+          data-price="{{ product.purchase_price|default:0 }}"
+          onclick="handleAddProduct(this)">
     Ajouter
   </button>
 </div>

@@ -1,32 +1,76 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="p-6">
-  <h1 class="text-2xl font-bold mb-4">Détail de la vente #{{ sale.id }}</h1>
+<div class="p-6 max-w-5xl mx-auto space-y-6">
 
-  <div class="mb-4">
-    <p><strong>Client :</strong> {{ sale.client }}</p>
-    <p><strong>Date :</strong> {{ sale.date|date:"Y-m-d H:i" }}</p>
-    <p><strong>Total :</strong> {{ sale.total_amount }} MAD</p>
-    <p><strong>Payé :</strong> {{ sale.amount_paid }} MAD</p>
-    <p><strong>Reste dû :</strong> {{ sale.get_balance_due }} MAD</p>
+  <div class="flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-gray-800">🧾 Détail de la vente #{{ sale.id }}</h1>
+    <a href="{% url 'sales:sale_list' %}" class="text-blue-600 hover:underline">← Retour à la liste</a>
   </div>
 
-  <h2 class="text-xl font-semibold mt-6 mb-2">Produits vendus</h2>
-  <ul class="list-disc pl-6">
-    {% for item in items %}
-    <li>{{ item.quantity }} x {{ item.product.name }} à {{ item.unit_price }} MAD ({{ item.total_price }} MAD)</li>
-    {% endfor %}
-  </ul>
+  <!-- Infos générales -->
+  <div class="bg-white shadow rounded-lg p-6">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">🧍 Informations client</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <p><strong>Client :</strong> {{ sale.client|default:"-" }}</p>
+      <p><strong>Date :</strong> {{ sale.date|date:"d/m/Y H:i" }}</p>
+      <p><strong>Total :</strong> {{ sale.total_amount|floatformat:2 }} MAD</p>
+      <p><strong>Payé :</strong> {{ sale.amount_paid|floatformat:2 }} MAD</p>
+      <p class="{% if sale.get_balance_due > 0 %}text-red-600 font-semibold{% else %}text-green-600{% endif %}">
+        <strong>Reste dû :</strong> {{ sale.get_balance_due|floatformat:2 }} MAD
+      </p>
+    </div>
+  </div>
 
-  <h2 class="text-xl font-semibold mt-6 mb-2">Paiements</h2>
-  <ul class="list-disc pl-6">
-    {% for payment in payments %}
-    <li>{{ payment.date|date:"Y-m-d H:i" }} — {{ payment.amount }} MAD ({{ payment.get_method_display }})</li>
-    {% empty %}
-    <li>Aucun paiement.</li>
-    {% endfor %}
-  </ul>
+  <!-- Produits -->
+  <div class="bg-white shadow rounded-lg p-6">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">🛒 Produits vendus</h2>
+    {% if items %}
+    <table class="w-full text-sm border">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="p-2 text-left">Produit</th>
+          <th class="p-2 text-center">Quantité</th>
+          <th class="p-2 text-center">Prix unitaire</th>
+          <th class="p-2 text-right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr class="border-t">
+          <td class="p-2">{{ item.product.name }}</td>
+          <td class="p-2 text-center">{{ item.quantity }}</td>
+          <td class="p-2 text-center">{{ item.unit_price|floatformat:2 }} MAD</td>
+          <td class="p-2 text-right">{{ item.total_price|floatformat:2 }} MAD</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="text-gray-500 italic">Aucun produit enregistré pour cette vente.</p>
+    {% endif %}
+  </div>
 
-  <a href="{% url 'sales:sale_list' %}" class="mt-6 inline-block text-blue-600 hover:underline">← Retour à la liste</a>
+  <!-- Paiements -->
+  <div class="bg-white shadow rounded-lg p-6">
+    <h2 class="text-xl font-semibold text-gray-700 mb-4">💳 Paiements</h2>
+    {% if payments %}
+    <ul class="space-y-2 text-sm">
+      {% for payment in payments %}
+      <li class="border p-3 rounded bg-gray-50">
+        <div class="flex justify-between">
+          <span>{{ payment.date|date:"d/m/Y H:i" }}</span>
+          <span class="text-right font-medium">{{ payment.amount|floatformat:2 }} MAD</span>
+        </div>
+        <div class="text-sm text-gray-600 italic">
+          Méthode : {{ payment.get_method_display }}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-gray-500 italic">Aucun paiement effectué.</p>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}
