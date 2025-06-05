@@ -1,34 +1,65 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 {% block content %}
-<div class="p-4 max-w-2xl mx-auto">
-  <h1 class="text-2xl font-bold mb-4">
-    {% if form.instance.pk %}
-      Modifier le Client
-    {% else %}
-      Ajouter un Client
-    {% endif %}
-  </h1>
+<div class="min-h-screen bg-gray-50 py-6 flex flex-col justify-center sm:py-12">
+  <div class="relative py-3 sm:max-w-xl md:max-w-2xl mx-auto">
+    <div class="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
+      <div class="max-w-md mx-auto">
+        <div class="flex items-center space-x-5">
+          <div class="block pl-2 font-semibold text-xl self-start text-gray-700">
+            <h1 class="leading-relaxed">
+              {% if form.instance.pk %}
+                <span class="text-blue-600">✏️</span> Modifier le Client
+              {% else %}
+                <span class="text-green-600">➕</span> Ajouter un Client
+              {% endif %}
+            </h1>
+          </div>
+        </div>
 
-  <form method="post" class="bg-white p-6 rounded shadow space-y-4">
-    {% csrf_token %}
+        <div class="divide-y divide-gray-200">
+          <form method="post" class="py-8 space-y-6">
+            {% csrf_token %}
 
-    {% for field in form.visible_fields %}
-      <div>
-        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-          {{ field.label }}
-        </label>
-        {% render_field field class="mt-1 block w-full rounded border-2 border-gray-400 shadow-sm focus:ring focus:ring-blue-300 focus:border-blue-500" %}
-        {% if field.errors %}
-          <p class="text-red-500 text-sm">{{ field.errors.0 }}</p>
-        {% endif %}
+            {% for field in form.visible_fields %}
+              <div class="flex flex-col">
+                <label for="{{ field.id_for_label }}" class="text-sm font-medium text-gray-700 mb-1">
+                  {{ field.label }}
+                </label>
+                <div class="relative rounded-md shadow-sm">
+                  {% render_field field class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 ease-in-out sm:text-sm" %}
+                </div>
+                {% if field.errors %}
+                  <p class="mt-1 text-sm text-red-600">
+                    <span class="flex items-center">
+                      <svg class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                      </svg>
+                      {{ field.errors.0 }}
+                    </span>
+                  </p>
+                {% endif %}
+              </div>
+            {% endfor %}
+
+            <div class="pt-6 flex items-center justify-start space-x-4">
+              <button type="submit" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-150 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                </svg>
+                Enregistrer
+              </button>
+              <a href="{% url 'clients:client_list' %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Annuler
+              </a>
+            </div>
+          </form>
+        </div>
       </div>
-    {% endfor %}
-
-    <div class="pt-4">
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">💾 Enregistrer</button>
-      <a href="{% url 'clients:client_list' %}" class="ml-4 text-gray-500 hover:underline">Annuler</a>
     </div>
-  </form>
+  </div>
 </div>
 {% endblock %}

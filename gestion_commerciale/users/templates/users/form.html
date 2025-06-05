@@ -2,23 +2,55 @@
 {% block title %}{{ user_form.instance.pk|yesno:"Modifier,Ajouter" }} un utilisateur{% endblock %}
 
 {% block content %}
-<h3 class="mb-4">{{ user_form.instance.pk|yesno:"Modifier,Ajouter" }} un utilisateur</h3>
+<div class="max-w-4xl mx-auto">
+    <h3 class="text-2xl font-semibold mb-6">{{ user_form.instance.pk|yesno:"Modifier,Ajouter" }} un utilisateur</h3>
 
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="row">
-        <div class="col-md-6">
-            <h5>Informations utilisateur</h5>
-            {{ user_form.as_p }}
+    <form method="post" enctype="multipart/form-data" class="bg-white shadow-md rounded-lg p-6">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <h5 class="text-lg font-medium text-gray-700">Informations utilisateur</h5>
+                {% for field in user_form %}
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700" for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+                        {{ field|addclass:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                        {% if field.errors %}
+                            <p class="text-red-500 text-xs italic">{{ field.errors.0 }}</p>
+                        {% endif %}
+                        {% if field.help_text %}
+                            <p class="text-gray-500 text-xs">{{ field.help_text }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="space-y-4">
+                <h5 class="text-lg font-medium text-gray-700">Profil</h5>
+                {% for field in profile_form %}
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700" for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                        </label>
+                        {{ field|addclass:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                        {% if field.errors %}
+                            <p class="text-red-500 text-xs italic">{{ field.errors.0 }}</p>
+                        {% endif %}
+                        {% if field.help_text %}
+                            <p class="text-gray-500 text-xs">{{ field.help_text }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
-        <div class="col-md-6">
-            <h5>Profil</h5>
-            {{ profile_form.as_p }}
+        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+            <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                Enregistrer
+            </button>
+            <a href="{% url 'users:user_list' %}" class="w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-center">
+                Annuler
+            </a>
         </div>
-    </div>
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a href="{% url 'users:user_list' %}" class="btn btn-secondary">Annuler</a>
-    </div>
-</form>
+    </form>
+</div>
 {% endblock %}

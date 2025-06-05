@@ -1,67 +1,222 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Tableau de Bord{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-
-    <!-- 🔷 En-tête de bienvenue -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Bienvenue {{ user.first_name|default:user.username }} 👋</h1>
-            <p class="text-sm text-gray-500">Nous sommes le {{ now|date:"l j F Y" }}</p>
+<div class="p-4 md:p-6 space-y-6">
+    <!-- 🔷 Welcome Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 md:p-8 text-white shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="space-y-2">
+                <h1 class="text-2xl md:text-3xl font-bold">Bienvenue {{ user.first_name|default:user.username }} 👋</h1>
+                <p class="text-blue-100">{{ now|date:"l j F Y" }}</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'pos:interface' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                    <span class="mr-2">🖥️</span> Lancer le POS
+                </a>
+                <a href="{% url 'sales:sale_create' %}" 
+                   class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-400 transition-colors">
+                    <span class="mr-2">➕</span> Nouvelle Vente
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- 🔷 Cartes de résumé -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">🛒 Ventes du jour</h2>
-            <p class="text-2xl font-bold text-blue-600">5 200 MAD</p>
+    <!-- 🔷 Quick Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Ventes du jour</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ daily_sales|default:"0"|floatformat:2 }} MAD</p>
+                </div>
+                <span class="text-blue-500 bg-blue-50 p-2 rounded-lg">🛒</span>
+            </div>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-green-500 mr-1">↑ 12%</span>
+                <span class="text-gray-400">vs hier</span>
+            </div>
         </div>
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">📦 Produits en stock</h2>
-            <p class="text-2xl font-bold text-green-600">83 articles</p>
+
+        <div class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Produits en stock</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_products|default:"0" }}</p>
+                </div>
+                <span class="text-green-500 bg-green-50 p-2 rounded-lg">📦</span>
+            </div>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-red-500 mr-1">{{ low_stock|default:"0" }}</span>
+                <span class="text-gray-400">produits en alerte</span>
+            </div>
         </div>
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">👥 Clients</h2>
-            <p class="text-2xl font-bold text-purple-600">124 clients</p>
+
+        <div class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Clients actifs</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_clients|default:"0" }}</p>
+                </div>
+                <span class="text-purple-500 bg-purple-50 p-2 rounded-lg">👥</span>
+            </div>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-green-500 mr-1">{{ new_clients|default:"0" }}</span>
+                <span class="text-gray-400">nouveaux ce mois</span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Créances clients</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_debts|default:"0"|floatformat:2 }} MAD</p>
+                </div>
+                <span class="text-red-500 bg-red-50 p-2 rounded-lg">💰</span>
+            </div>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-gray-400">{{ debts_count|default:"0" }} clients débiteurs</span>
+            </div>
         </div>
     </div>
 
-    <!-- 🔷 Boutons de raccourcis -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <a href="{% url 'clients:client_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white text-center py-3 rounded-lg font-medium">
-            ➕ Nouveau Client
-        </a>
-        <a href="{% url 'products:product-create' %}" class="bg-green-600 hover:bg-green-700 text-white text-center py-3 rounded-lg font-medium">
-            ➕ Nouveau Produit
-        </a>
-        <a href="#" class="bg-yellow-500 hover:bg-yellow-600 text-white text-center py-3 rounded-lg font-medium">
-            💳 Nouvelle Vente
-        </a>
-        <a href="{% url 'pos:interface' %}" class="bg-gray-700 hover:bg-gray-800 text-white text-center py-3 rounded-lg font-medium">
-            🖥️ Lancer le POS
-        </a>
+    <!-- 🔷 Quick Actions & Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Quick Actions -->
+        <div class="lg:col-span-1 space-y-4">
+            <h2 class="text-lg font-semibold text-gray-800">Actions rapides</h2>
+            <div class="bg-white rounded-xl shadow-sm p-4 space-y-3">
+                <a href="{% url 'clients:client_create' %}" 
+                   class="flex items-center justify-between p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                    <span class="flex items-center text-blue-700">
+                        <span class="mr-3">👤</span>
+                        Nouveau Client
+                    </span>
+                    <span class="text-blue-400">→</span>
+                </a>
+                
+                <a href="{% url 'products:product-create' %}" 
+                   class="flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                    <span class="flex items-center text-green-700">
+                        <span class="mr-3">📦</span>
+                        Nouveau Produit
+                    </span>
+                    <span class="text-green-400">→</span>
+                </a>
+                
+                <a href="{% url 'inventory:stock_movement_create' %}" 
+                   class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+                    <span class="flex items-center text-yellow-700">
+                        <span class="mr-3">🔄</span>
+                        Mouvement Stock
+                    </span>
+                    <span class="text-yellow-400">→</span>
+                </a>
+                
+                <a href="{% url 'sales:sale_create' %}" 
+                   class="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                    <span class="flex items-center text-purple-700">
+                        <span class="mr-3">💰</span>
+                        Nouvelle Vente
+                    </span>
+                    <span class="text-purple-400">→</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-semibold text-gray-800">Dernières commandes</h2>
+                <a href="{% url 'sales:sale_list' %}" class="text-blue-600 hover:text-blue-800 text-sm">Voir tout →</a>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Référence</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for order in recent_orders %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    #{{ order.reference }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ order.client|default:"Client occasionnel" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ order.date|date:"d/m/Y H:i" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ order.total_amount|floatformat:2 }} MAD
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if order.is_paid %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Payé
+                                        </span>
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            En attente
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                    Aucune commande récente
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 🔷 Liste des dernières commandes -->
-    <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">🧾 Dernières commandes</h2>
-        <ul class="space-y-2 text-sm text-gray-600">
-            <li class="flex justify-between border-b pb-1">
-                <span>#00012 — Client X</span>
-                <span class="text-blue-600 font-medium">430 MAD</span>
-            </li>
-            <li class="flex justify-between border-b pb-1">
-                <span>#00011 — Client Y</span>
-                <span class="text-blue-600 font-medium">129 MAD</span>
-            </li>
-            <li class="flex justify-between border-b pb-1">
-                <span>#00010 — Client Z</span>
-                <span class="text-blue-600 font-medium">764 MAD</span>
-            </li>
-        </ul>
+    <!-- 🔷 Stock Alerts -->
+    <div class="space-y-4">
+        <h2 class="text-lg font-semibold text-gray-800">Alertes stock</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for product in low_stock_products %}
+            <div class="bg-white rounded-lg shadow-sm p-4 flex items-center space-x-4">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-12 h-12 rounded-lg object-cover">
+                {% else %}
+                    <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                        📦
+                    </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">{{ product.name }}</p>
+                    <p class="text-sm text-red-600">Stock: {{ product.current_stock }}</p>
+                </div>
+                <a href="{% url 'inventory:stock_movement_create' %}?product={{ product.id }}" 
+                   class="flex-shrink-0 text-blue-600 hover:text-blue-800">
+                    Réappro →
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-span-full bg-green-50 rounded-lg p-4 text-green-700">
+                ✨ Aucune alerte de stock à signaler
+            </div>
+            {% endfor %}
+        </div>
     </div>
-
 </div>
+
+<!-- Chart.js for future use -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}

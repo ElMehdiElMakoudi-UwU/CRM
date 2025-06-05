@@ -2,11 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>POS Interface</title>
   <script defer src="/static/pos/pos.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
+    /* Prevent pull-to-refresh on mobile */
+    body {
+      overscroll-behavior-y: contain;
+    }
+    
+    /* Better touch targets */
+    button, input, select {
+      min-height: 44px;
+    }
+    
+    /* Custom scrollbar for better touch scrolling */
+    .touch-scroll {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+    }
+    
     @media print {
       body * { visibility: hidden; }
       #receipt-preview, #receipt-preview * {
@@ -22,21 +39,66 @@
         font-family: monospace;
       }
     }
+
+    /* Mobile-first table styles */
+    .responsive-table {
+      display: block;
+      width: 100%;
+    }
+    
+    @media (max-width: 640px) {
+      .responsive-table thead {
+        display: none;
+      }
+      
+      .responsive-table tr {
+        display: block;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 0.5rem 0;
+      }
+      
+      .responsive-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.25rem 0;
+      }
+      
+      .responsive-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+      }
+    }
   </style>
 </head>
 
 <body class="bg-gray-100 text-lg select-none touch-manipulation m-0 p-0 w-full">
-
   <form style="display: none;">{% csrf_token %}</form>
 
-  <!-- ✅ Grille à 2 colonnes pleines -->
-  <div class="w-full h-full bg-white grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+  <!-- Mobile Navigation -->
+  <div class="lg:hidden flex justify-between items-center bg-white p-4 shadow-md sticky top-0 z-50">
+    <button id="show-cart" class="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2">
+      🛒 <span id="mobile-cart-count">0</span>
+    </button>
+    <input id="mobile-product-search" type="search" placeholder="🔍 Recherche..." 
+           class="flex-1 mx-4 px-4 py-2 border rounded-lg" />
+    <button id="show-products" class="px-4 py-2 bg-gray-500 text-white rounded-lg">
+      📦
+    </button>
+  </div>
 
-    <!-- 🛒 Colonne Panier -->
-    <div class="space-y-6 p-4">
-      <h2 class="text-2xl font-bold">🛒 Panier</h2>
-      <div id="cart" class="overflow-y-auto max-h-[420px] border rounded-xl p-4 bg-gray-50">
-        <table class="w-full text-left text-base">
+  <!-- Main Content -->
+  <div class="w-full h-full bg-white grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- 🛒 Cart Section -->
+    <div id="cart-section" class="space-y-4 p-4 lg:block">
+      <h2 class="text-2xl font-bold flex items-center justify-between">
+        🛒 Panier
+        <button id="close-cart" class="lg:hidden text-gray-500">✕</button>
+      </h2>
+      
+      <div id="cart" class="overflow-y-auto max-h-[calc(100vh-400px)] lg:max-h-[420px] border rounded-xl p-4 bg-gray-50 touch-scroll">
+        <table class="w-full text-left text-base responsive-table">
           <thead>
             <tr class="border-b font-semibold">
               <th>Produit</th>
@@ -49,15 +111,16 @@
         </table>
       </div>
 
-      <div class="space-y-2 text-lg">
+      <div class="space-y-2 text-lg bg-white p-4 rounded-lg shadow-sm">
         <div class="flex justify-between"><span>Sous-total:</span><span id="subtotal">0.00 MAD</span></div>
         <div class="flex justify-between"><span>TVA (20%):</span><span id="vat">0.00 MAD</span></div>
         <div class="flex justify-between font-bold text-xl"><span>Total:</span><span id="total">0.00 MAD</span></div>
       </div>
 
       <div class="space-y-3">
-        <input type="number" id="paid-amount" placeholder="💵 Montant Payé" class="border text-xl p-4 rounded-xl w-full" />
-        <select id="payment-method" class="border text-xl p-4 rounded-xl w-full">
+        <input type="number" id="paid-amount" inputmode="decimal" placeholder="💵 Montant Payé" 
+               class="border text-xl p-4 rounded-xl w-full focus:ring-2 focus:ring-blue-500" />
+        <select id="payment-method" class="border text-xl p-4 rounded-xl w-full focus:ring-2 focus:ring-blue-500">
           <option value="cash">Espèces</option>
           <option value="card">Carte</option>
           <option value="credit">Crédit</option>
@@ -66,25 +129,85 @@
         <div class="flex justify-between text-lg"><span>Rendu:</span><span id="change-due">0.00 MAD</span></div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4">
-        <button id="confirm-sale" class="bg-green-500 text-white text-xl py-4 rounded-xl w-full">✔ Valider</button>
-        <button id="cancel-sale" class="bg-red-500 text-white text-xl py-4 rounded-xl w-full">❌ Annuler</button>
-        <button id="print-receipt" class="bg-blue-500 text-white text-xl py-4 rounded-xl w-full">🖨 Ticket</button>
+      <div class="grid grid-cols-2 gap-4">
+        <button id="confirm-sale" class="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white text-xl py-4 rounded-xl w-full transition">
+          ✔ Valider
+        </button>
+        <button id="cancel-sale" class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white text-xl py-4 rounded-xl w-full transition">
+          ❌ Annuler
+        </button>
+        <button id="print-receipt" class="col-span-2 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-xl py-4 rounded-xl w-full transition">
+          🖨 Ticket
+        </button>
       </div>
     </div>
 
-    <!-- 📦 Colonne Produits -->
-    <div class="p-4">
-      <div class="flex items-center justify-between mb-4">
+    <!-- 📦 Products Section -->
+    <div id="products-section" class="p-4 lg:block">
+      <div class="flex items-center justify-between mb-4 sticky top-0 bg-white z-10 pb-4">
         <h2 class="text-2xl font-bold">📦 Produits</h2>
-        <input id="product-search" type="text" placeholder="🔍 Recherche ou Scan..." class="border text-xl p-4 rounded-xl w-64" />
+        <div class="flex items-center gap-4">
+          <input id="product-search" type="search" placeholder="🔍 Recherche ou Scan..." 
+                 class="border text-xl p-4 rounded-xl w-64 focus:ring-2 focus:ring-blue-500 hidden lg:block" />
+          <button id="close-products" class="lg:hidden text-gray-500">✕</button>
+        </div>
       </div>
-      <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <!-- Produits dynamiques via JS -->
       </div>
     </div>
   </div>
 
   <div id="receipt-preview" class="hidden print:block mt-10"></div>
+
+  <script>
+    // Mobile navigation handling
+    document.addEventListener('DOMContentLoaded', function() {
+      const cartSection = document.getElementById('cart-section');
+      const productsSection = document.getElementById('products-section');
+      const showCart = document.getElementById('show-cart');
+      const showProducts = document.getElementById('show-products');
+      const closeCart = document.getElementById('close-cart');
+      const closeProducts = document.getElementById('close-products');
+      
+      // Initially hide cart on mobile
+      if (window.innerWidth < 1024) {
+        cartSection.style.display = 'none';
+      }
+      
+      showCart.addEventListener('click', () => {
+        cartSection.style.display = 'block';
+        productsSection.style.display = 'none';
+      });
+      
+      showProducts.addEventListener('click', () => {
+        productsSection.style.display = 'block';
+        cartSection.style.display = 'none';
+      });
+      
+      closeCart.addEventListener('click', () => {
+        cartSection.style.display = 'none';
+        productsSection.style.display = 'block';
+      });
+      
+      closeProducts.addEventListener('click', () => {
+        productsSection.style.display = 'none';
+        cartSection.style.display = 'block';
+      });
+      
+      // Sync search fields
+      const mobileSearch = document.getElementById('mobile-product-search');
+      const desktopSearch = document.getElementById('product-search');
+      
+      mobileSearch.addEventListener('input', (e) => {
+        desktopSearch.value = e.target.value;
+        desktopSearch.dispatchEvent(new Event('input'));
+      });
+      
+      desktopSearch.addEventListener('input', (e) => {
+        mobileSearch.value = e.target.value;
+      });
+    });
+  </script>
 </body>
 </html>
