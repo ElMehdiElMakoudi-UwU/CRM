@@ -1,0 +1,160 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block inner_title %}Analytics Dashboard{% endblock %}
+
+{% block inner_content %}
+<div class="p-4">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-600 mb-2">Total Sales</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ total_metrics.total_sales|floatformat:2 }} MAD</p>
+            <p class="text-sm text-gray-500 mt-2">Last 30 days</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-600 mb-2">Total Orders</h3>
+            <p class="text-3xl font-bold text-green-600">{{ total_metrics.total_orders }}</p>
+            <p class="text-sm text-gray-500 mt-2">Last 30 days</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-600 mb-2">Average Order Value</h3>
+            <p class="text-3xl font-bold text-purple-600">{{ total_metrics.avg_order_value|floatformat:2 }} MAD</p>
+            <p class="text-sm text-gray-500 mt-2">Last 30 days</p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Sales Trend -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sales Trend</h3>
+            <canvas id="salesChart" height="300"></canvas>
+        </div>
+        
+        <!-- Orders Trend -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Orders Trend</h3>
+            <canvas id="ordersChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Products & Sales Rep Performance -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Products -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Top Products</h3>
+                <a href="{% url 'mobile_pos:product_performance' %}" 
+                   class="text-sm text-blue-600 hover:text-blue-800">View All</a>
+            </div>
+            <div class="space-y-4">
+                {% for product in top_products %}
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium">{{ product.product__name }}</p>
+                        <p class="text-sm text-gray-600">{{ product.total_units }} units sold</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-medium">{{ product.total_revenue|floatformat:2 }} MAD</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sales Rep Performance -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Sales Rep Performance</h3>
+                <a href="{% url 'mobile_pos:sales_rep_analytics' %}" 
+                   class="text-sm text-blue-600 hover:text-blue-800">View All</a>
+            </div>
+            <div class="space-y-4">
+                {% for rep in sales_rep_performance %}
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium">{{ rep.user__username }}</p>
+                        <p class="text-sm text-gray-600">{{ rep.total_orders }} orders</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-medium">{{ rep.total_sales|floatformat:2 }} MAD</p>
+                        <p class="text-xs text-gray-500">{{ rep.avg_conversion|floatformat:1 }}% conversion</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {{ chart_data|safe }};
+    
+    // Sales Chart
+    new Chart(document.getElementById('salesChart'), {
+        type: 'line',
+        data: {
+            labels: chartData.dates,
+            datasets: [{
+                label: 'Daily Sales (MAD)',
+                data: chartData.sales,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Orders Chart
+    new Chart(document.getElementById('ordersChart'), {
+        type: 'bar',
+        data: {
+            labels: chartData.dates,
+            datasets: [{
+                label: 'Daily Orders',
+                data: chartData.orders,
+                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

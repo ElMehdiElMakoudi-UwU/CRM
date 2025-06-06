@@ -24,9 +24,10 @@ class Purchase(models.Model):
     notes = models.TextField(blank=True, null=True)
     due_date = models.DateField(default=default_due_date)
     
-    @property
-    def amount_paid(self):
-        return sum(p.amount for p in self.payments.all())
+    def update_amount_paid(self):
+        """Update the total amount paid for this purchase"""
+        self.amount_paid = sum(p.amount for p in self.payments.all())
+        self.save()
 
     @property
     def amount_due(self):

@@ -20,14 +20,13 @@ class Stock(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_entries')
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, related_name='stocks', null=True, blank=True)
     quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    reorder_threshold = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('product', 'warehouse')  # Un produit unique par dépôt
 
     def is_below_threshold(self):
-        return self.quantity <= self.reorder_threshold
+        return self.quantity <= self.product.reorder_threshold
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity} en {self.warehouse.name}"

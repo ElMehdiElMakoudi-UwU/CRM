@@ -1,174 +1,139 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}CRM App{% endblock %}</title>
-
-    <!-- Tailwind CSS -->
+    <title>{% block title %}Gestion Commerciale{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Font Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        @media (max-width: 768px) {
-            .sidebar-open {
-                transform: translateX(0);
-            }
-            .sidebar-closed {
-                transform: translateX(-100%);
-            }
-        }
-    </style>
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+    {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen">
-    <!-- Mobile Header -->
-    <div class="md:hidden bg-white shadow-md p-4 flex items-center justify-between fixed top-0 w-full z-50">
-        <button id="mobile-menu-button" class="text-gray-500 hover:text-gray-700">
-            <i data-lucide="menu" class="w-6 h-6"></i>
-        </button>
-        <a href="{% url 'home' %}" class="text-xl font-bold text-blue-600">CRM APP</a>
-        <div class="w-6"></div> <!-- Spacer for alignment -->
-    </div>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-sm">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 justify-between">
+                    <div class="flex">
+                        <div class="flex flex-shrink-0 items-center">
+                            <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">GC</a>
+                        </div>
+                        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'home' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'home' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Tableau de bord</a>
+                                {% if user.profile.role in 'admin,manager' %}
+                                <a href="{% url 'users:user_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'user_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Utilisateurs</a>
+                                {% endif %}
+                                <a href="{% url 'sales:sale_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'sale_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Ventes</a>
+                                <a href="{% url 'products:product-list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'product-list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Produits</a>
+                                <a href="{% url 'clients:client_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'client_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Clients</a>
+                                <a href="{% url 'inventory:stock_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'stock_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Stock</a>
+                                <a href="{% url 'suppliers:supplier_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'supplier_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Fournisseurs</a>
+                                <a href="{% url 'purchases:purchase_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'purchase_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Achats</a>
+                                <a href="{% url 'payments:client_debts_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'client_debts_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Paiements</a>
+                                <a href="{% url 'pos:interface' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'interface' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">POS</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                        {% if user.is_authenticated %}
+                            <!-- Profile dropdown -->
+                            <div class="relative ml-3">
+                                <button type="button" class="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown">
+                                    <span class="sr-only">Open user menu</span>
+                                    <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                        <span class="text-indigo-800 font-medium">{{ user.username|slice:":2"|upper }}</span>
+                                    </div>
+                                </button>
+                                <!-- Dropdown menu -->
+                                <div class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow" id="user-dropdown">
+                                    <div class="py-3 px-4">
+                                        <span class="block text-sm font-medium text-gray-900 truncate">{{ user.get_full_name|default:user.username }}</span>
+                                        <span class="block text-sm text-gray-500 truncate">{{ user.email }}</span>
+                                    </div>
+                                    <ul class="py-1" aria-labelledby="user-menu-button">
+                                        <li>
+                                            <a href="{% url 'users:profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Mon profil</a>
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'logout' %}" class="block py-2 px-4 text-sm text-red-600 hover:bg-gray-100">Déconnexion</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="text-gray-500 hover:text-gray-700">Connexion</a>
+                        {% endif %}
+                    </div>
+                    <!-- Mobile menu button -->
+                    <div class="flex items-center sm:hidden">
+                        <button type="button" class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" aria-controls="mobile-menu" aria-expanded="false" data-collapse-toggle="mobile-menu">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-    <!-- ✅ SIDEBAR -->
-    <aside id="sidebar" class="w-64 bg-white shadow-md h-screen fixed flex flex-col transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out z-40">
-        <div class="px-6 py-4 text-2xl font-bold text-blue-600 border-b hidden md:block">
-            <a href="{% url 'home' %}" class="block hover:text-blue-500">CRM APP</a>
-        </div>
-        <nav class="flex-1 px-4 py-6 space-y-2 text-sm">
-            <!-- Tableau de bord -->
-            <a href="{% url 'home' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">🏠 Tableau de bord</a>
-
-            <!-- POS -->
-            <a href="{% url 'pos:interface' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">🧾 Point de Vente (POS)</a>
-            <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">📦 Produits</summary>
-                <ul class="ml-4 mt-1 space-y-1">
-                    <li><a href="{% url 'products:product-list' %}" class="block hover:text-blue-500">Liste</a></li>
-                    <li><a href="{% url 'products:category-list' %}" class="block hover:text-blue-500">Catégories</a></li>
-                </ul>
-            </details>
-
-            <!-- Fournisseurs -->
-            <a href="{% url 'suppliers:supplier_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">🏭 Fournisseurs</a>
-
-            <!-- Clients -->
-            <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">👥 Clients</summary>
-                <ul class="ml-4 mt-1 space-y-1">
-                    <li><a href="{% url 'clients:client_list' %}" class="block hover:text-blue-500">Liste</a></li>
-                    <li><a href="{% url 'clients:segment_list' %}" class="block hover:text-blue-500">Segments</a></li>
-                </ul>
-            </details>
-
-            <!-- Stock -->
-            <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">📊 Stock</summary>
-                <ul class="ml-4 mt-1 space-y-1">
-                    <li><a href="{% url 'inventory:stock_list' %}" class="block hover:text-blue-500">Inventaire</a></li>
-                    <li><a href="{% url 'inventory:stock_movement_list' %}" class="block hover:text-blue-500">Mouvements</a></li>
-                    <li><a href="{% url 'inventory:stock_transfer' %}" class="block hover:text-blue-500">Transfert entre dépôts</a></li>
-                    <li><a href="{% url 'inventory:stock_alerts' %}" class="block hover:text-blue-500">Alertes</a></li>
-                    <li><a href="{% url 'inventory:warehouse_list' %}" class="block hover:text-blue-500">Depots</a></li>
-                </ul>
-            </details>
-
-            <!-- Achats -->
-            <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">🛒 Achats</summary>
-                <ul class="ml-4 mt-1 space-y-1">
-                    <li><a href="{% url 'purchases:purchase_list' %}" class="block hover:text-blue-500">Liste</a></li>
-                    <li><a href="{% url 'purchases:purchase_create' %}" class="block hover:text-blue-500">Nouvelle Commande Fournisseurs</a></li>
-                </ul>
-            </details>
-
-            <!-- Ventes -->
-            <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">💰 Commandes Clients</summary>
-                <ul class="ml-4 mt-1 space-y-1">
-                    <li><a href="{% url 'sales:sale_list' %}" class="block hover:text-blue-500">Liste</a></li>
-                    <li><a href="{% url 'sales:sale_create' %}" class="block hover:text-blue-500">Nouvelle Commande</a></li>
-                </ul>
-            </details>
-
-            <!-- Paiements -->
-            <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">💳 Paiements</summary>
-                <ul class="ml-4 mt-1 space-y-1">
-                    <li><a href="{% url 'payments:client_debts_list' %}" class="block hover:text-blue-500">Clients débiteurs</a></li>
-                </ul>
-            </details>
-
-            <!-- Statistiques -->
-            <details class="group">
-                <summary class="cursor-pointer py-2 font-medium text-gray-700 hover:text-blue-600">📈 Statistiques</summary>
-                <ul class="ml-4 mt-1 space-y-1">
-                    <li><a href="{% url 'dashboard:home' %}" class="block hover:text-blue-500">Dashboard global</a></li>
-                    <li><a href="{% url 'dashboard:sales' %}" class="block hover:text-blue-500">Ventes</a></li>
-                    <li><a href="{% url 'dashboard:pos' %}" class="block hover:text-blue-500">Point de vente (POS)</a></li>
-                    <li><a href="{% url 'dashboard:stock' %}" class="block hover:text-blue-500">Stock</a></li>
-                    <li><a href="{% url 'dashboard:clients' %}" class="block hover:text-blue-500">Clients</a></li>
-                    <li><a href="{% url 'dashboard:purchases' %}" class="block hover:text-blue-500">Achats</a></li>
-                </ul>
-            </details>
-
-
-            <!-- Utilisateurs -->
-            <a href="{% url 'users:user_list' %}" class="block py-2 font-medium text-gray-700 hover:text-blue-600">👤 Utilisateurs</a>
-
-            <!-- Authentification -->
-            {% if user.is_authenticated %}
-                <a href="{% url 'logout' %}" class="block py-2 font-medium text-red-600 hover:text-red-800">Se déconnecter</a>
-            {% else %}
-                <a href="{% url 'login' %}" class="block py-2 font-medium text-blue-600 hover:text-blue-800">Connexion</a>
-            {% endif %}
+            <!-- Mobile menu -->
+            <div class="hidden sm:hidden" id="mobile-menu">
+                <div class="space-y-1 pb-3 pt-2">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'home' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'home' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Tableau de bord</a>
+                        {% if user.profile.role in 'admin,manager' %}
+                        <a href="{% url 'users:user_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'user_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Utilisateurs</a>
+                        {% endif %}
+                        <a href="{% url 'sales:sale_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'sale_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Ventes</a>
+                        <a href="{% url 'products:product-list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'product-list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Produits</a>
+                        <a href="{% url 'clients:client_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'client_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Clients</a>
+                        <a href="{% url 'inventory:stock_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'stock_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Stock</a>
+                        <a href="{% url 'suppliers:supplier_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'supplier_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Fournisseurs</a>
+                        <a href="{% url 'purchases:purchase_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'purchase_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Achats</a>
+                        <a href="{% url 'payments:client_debts_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'client_debts_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Paiements</a>
+                        <a href="{% url 'pos:interface' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'interface' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">POS</a>
+                    {% endif %}
+                </div>
+                {% if user.is_authenticated %}
+                    <div class="border-t border-gray-200 pb-3 pt-4">
+                        <div class="flex items-center px-4">
+                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                <span class="text-indigo-800 font-medium">{{ user.username|slice:":2"|upper }}</span>
+                            </div>
+                            <div class="ml-3">
+                                <div class="text-base font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <a href="{% url 'users:profile' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800">Mon profil</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-base font-medium text-red-600 hover:bg-gray-100">Déconnexion</a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </nav>
 
-    </aside>
+        <!-- Page header -->
+        {% if messages %}
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+            {% for message in messages %}
+            <div class="rounded-md p-4 mb-4 {% if message.tags == 'success' %}bg-green-50 text-green-700{% elif message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-    <!-- Overlay for mobile -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black opacity-50 z-30 hidden md:hidden"></div>
-
-    <!-- CONTENU PRINCIPAL + FOOTER -->
-    <div class="md:ml-64 flex flex-col min-h-screen">
-        <!-- Add top padding for mobile header -->
-        <div class="h-16 md:h-0"></div>
-
-        <!-- CONTENU QUI PREND LA PLACE DISPONIBLE -->
-        <main class="flex-grow p-4 md:p-8">
-        {% block content %}{% endblock %}
+        <main>
+            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                {% block content %}{% endblock %}
+            </div>
         </main>
-
-        <!-- FOOTER FIXÉ EN BAS PAR LE FLEX -->
-        <footer class="bg-white text-center text-sm text-gray-400 py-4 border-t">
-        © {{ now|date:"Y" }} - Application de gestion commerciale
-        </footer>
     </div>
 
-    <!-- Activer Lucide -->
-    <script>
-        lucide.createIcons();
-        
-        // Mobile menu functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('sidebar');
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const sidebarOverlay = document.getElementById('sidebar-overlay');
-
-            function toggleSidebar() {
-                sidebar.classList.toggle('-translate-x-full');
-                sidebarOverlay.classList.toggle('hidden');
-            }
-
-            mobileMenuButton.addEventListener('click', toggleSidebar);
-            sidebarOverlay.addEventListener('click', toggleSidebar);
-        });
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

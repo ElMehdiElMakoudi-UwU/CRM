@@ -1,25 +1,110 @@
 {% extends 'mobile_pos/base.html' %}
 {% load static %}
 
-{% block inner_title %}New Order{% endblock %}
-{% block header_title %}Create New Order{% endblock %}
+{% block extra_head %}
+<script src="{% static 'mobile_pos/js/offline-db.js' %}"></script>
+{% endblock %}
+
+{% block inner_title %}Nouvelle Commande{% endblock %}
+{% block header_title %}Créer une Nouvelle Commande{% endblock %}
 
 {% block inner_content %}
 <form method="post" id="orderForm" class="space-y-6">
     {% csrf_token %}
     
-    <!-- Client Information -->
+    <!-- Quick Search and Filters -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Client Information</h3>
+            <div class="space-y-4">
+                <!-- Search Bar with Dropdown -->
+                <div class="relative">
+                    <input type="text" id="product_search" 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Rechercher un produit..."
+                           autocomplete="off">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-500">🔍</span>
+                    </div>
+                    <!-- Search Results Dropdown -->
+                    <div id="search_results" class="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-64 overflow-y-auto hidden">
+                    </div>
+                </div>
+                
+                <!-- Quick Filters -->
+                <div class="flex gap-2 overflow-x-auto pb-2">
+                    <button type="button" class="quick-filter whitespace-nowrap px-3 py-1 rounded-full border border-gray-300 text-sm"
+                            data-category="all">Tous</button>
+                    {% for category in categories %}
+                    <button type="button" class="quick-filter whitespace-nowrap px-3 py-1 rounded-full border border-gray-300 text-sm"
+                            data-category="{{ category.id }}">{{ category.name }}</button>
+                    {% endfor %}
+                </div>
+                
+                <!-- Frequently Used Products -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Produits Fréquents</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for product in frequent_products %}
+                        <button type="button" 
+                                class="quick-add-product text-left p-2 border border-gray-200 rounded-lg hover:bg-gray-50"
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name }}"
+                                data-product-price="{{ product.selling_price }}">
+                            <div class="font-medium text-sm">{{ product.name }}</div>
+                            <div class="text-xs text-gray-600">{{ product.selling_price }} MAD</div>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations Client -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="p-6">
+            <div class="flex items-center gap-2 mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Informations Client</h3>
+                <div class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">Obligatoire</div>
+            </div>
+
+            <!-- Sélection Client -->
+            <div class="mb-6">
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Sélectionner un Client Existant</label>
+                    <div class="relative">
+                        <select id="client_id" name="client_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-8 appearance-none bg-white">
+                            <option value="">Saisir les informations d'un nouveau client...</option>
+                            {% for client in clients %}
+                                <option value="{{ client.id }}" 
+                                        data-name="{{ client.name }}"
+                                        data-contact="{{ client.phone|default:client.email|default:'' }}"
+                                        data-address="{{ client.address|default:'' }}">
+                                    {{ client.name }} {% if client.phone or client.email %}- {{ client.phone|default:client.email }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                            <span class="text-gray-500">👤</span>
+                        </div>
+                        <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500">Ou remplissez les détails ci-dessous pour un nouveau client</p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="client_name" class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                    <label for="client_name" class="block text-sm font-medium text-gray-700 mb-1">Nom du Client</label>
                     <input type="text" id="client_name" name="client_name" required
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label for="client_contact" class="block text-sm font-medium text-gray-700 mb-1">Client Contact</label>
+                    <label for="client_contact" class="block text-sm font-medium text-gray-700 mb-1">Contact Client</label>
                     <input type="text" id="client_contact" name="client_contact" required
                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
@@ -32,25 +117,30 @@
         </div>
     </div>
 
-    <!-- Order Items -->
+    <!-- Articles de la Commande -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
-            <div id="orderItems" class="space-y-4">
-                <!-- Order items will be added here -->
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-semibold text-gray-900">Articles</h3>
+                    <div class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">Au moins un article requis</div>
+                </div>
+                <button type="button" id="addItem"
+                        class="inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                    <span class="mr-2">➕</span> Ajouter un Article
+                </button>
             </div>
-            <button type="button" id="addItem"
-                    class="mt-4 inline-flex items-center px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                <span class="mr-2">➕</span> Add Item
-            </button>
+            <div id="orderItems" class="space-y-4">
+                <!-- Les articles seront ajoutés ici -->
+            </div>
         </div>
     </div>
 
-    <!-- Order Summary -->
+    <!-- Résumé de la Commande -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="p-6">
             <div class="flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900">Total Amount</h3>
+                <h3 class="text-lg font-semibold text-gray-900">Montant Total</h3>
                 <p class="text-2xl font-bold text-gray-900"><span id="totalAmount">0.00</span> MAD</p>
             </div>
         </div>
@@ -60,23 +150,377 @@
     <div class="flex justify-between">
         <a href="{% url 'mobile_pos:order_list' %}" 
            class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            Cancel
+            Annuler
         </a>
         <button type="submit"
                 class="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors">
-            Create Order
+            Créer la Commande
         </button>
     </div>
 </form>
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script>
-// This block contains any external JavaScript libraries we might need
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('product_search');
+    const searchResults = document.getElementById('search_results');
+    let productsArray = [];
+
+    // Convert products data to array for easier searching
+    {% for product in products %}
+    productsArray.push({
+        id: {{ product.id }},
+        name: "{{ product.name|escapejs }}",
+        price: {{ product.selling_price|stringformat:".2f" }},
+        category: "{{ product.category.name|default:'Non catégorisé'|escapejs }}"
+    });
+    {% endfor %}
+
+    // Function to highlight matching text
+    function highlightMatch(text, query) {
+        if (!query) return text;
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<strong class="bg-yellow-100">$1</strong>');
+    }
+
+    // Function to render search results
+    function renderSearchResults(results, query) {
+        if (results.length === 0) {
+            searchResults.innerHTML = `
+                <div class="px-4 py-3 text-sm text-gray-500">
+                    Aucun produit trouvé
+                </div>
+            `;
+            return;
+        }
+
+        searchResults.innerHTML = results.map(product => `
+            <button type="button"
+                    class="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors"
+                    data-product-id="${product.id}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="font-medium">
+                            ${highlightMatch(product.name, query)}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            ${product.category}
+                        </div>
+                    </div>
+                    <div class="text-blue-600 font-medium">
+                        ${product.price} MAD
+                    </div>
+                </div>
+            </button>
+        `).join('');
+
+        // Add click handlers to results
+        searchResults.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                
+                // Click the add item button if no empty rows exist
+                const emptySelects = Array.from(document.querySelectorAll('.product-select')).filter(select => !select.value);
+                if (emptySelects.length === 0) {
+                    document.getElementById('addItem').click();
+                }
+                
+                // Get the last empty product select
+                const lastEmptySelect = Array.from(document.querySelectorAll('.product-select')).find(select => !select.value);
+                
+                if (lastEmptySelect) {
+                    // Set the value and trigger change event
+                    lastEmptySelect.value = productId;
+                    lastEmptySelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    // Find the quantity input in the same row and focus it
+                    const row = lastEmptySelect.closest('.bg-gray-50');
+                    if (row) {
+                        const quantityInput = row.querySelector('.quantity-input');
+                        if (quantityInput) {
+                            quantityInput.focus();
+                            quantityInput.select();
+                        }
+                    }
+                    
+                    // Scroll the new row into view
+                    row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                
+                // Clear search and hide results
+                searchInput.value = '';
+                searchResults.classList.add('hidden');
+            });
+        });
+    }
+
+    // Search input handler with debounce
+    let searchTimeout;
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        // Show/hide dropdown based on input
+        if (query === '') {
+            searchResults.classList.add('hidden');
+            return;
+        }
+        
+        // Set new timeout for search
+        searchTimeout = setTimeout(() => {
+            // Filter products
+            const results = productsArray.filter(product => 
+                product.name.toLowerCase().includes(query) ||
+                product.category.toLowerCase().includes(query)
+            ).slice(0, 8); // Limit to 8 results
+            
+            // Show and populate dropdown
+            searchResults.classList.remove('hidden');
+            renderSearchResults(results, query);
+        }, 150); // 150ms delay
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.add('hidden');
+        }
+    });
+
+    // Handle keyboard navigation
+    searchInput.addEventListener('keydown', function(e) {
+        const buttons = searchResults.querySelectorAll('button');
+        const currentIndex = Array.from(buttons).findIndex(button => button === document.activeElement);
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                if (searchResults.classList.contains('hidden')) {
+                    searchResults.classList.remove('hidden');
+                } else if (currentIndex < buttons.length - 1) {
+                    buttons[currentIndex + 1].focus();
+                } else {
+                    buttons[0].focus();
+                }
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                if (currentIndex > 0) {
+                    buttons[currentIndex - 1].focus();
+                } else {
+                    searchInput.focus();
+                }
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (document.activeElement !== searchInput) {
+                    document.activeElement.click();
+                }
+                break;
+            case 'Escape':
+                searchResults.classList.add('hidden');
+                searchInput.blur();
+                break;
+        }
+    });
+
+    // Quick Filters
+    const quickFilters = document.querySelectorAll('.quick-filter');
+    quickFilters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            const category = this.dataset.category;
+            
+            // Update active state
+            quickFilters.forEach(f => f.classList.remove('bg-blue-100', 'border-blue-500', 'text-blue-700'));
+            this.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-700');
+            
+            // Filter products
+            productSelects.forEach(select => {
+                Array.from(select.options).forEach(option => {
+                    if (option.value === '') return; // Skip placeholder option
+                    const productCategory = option.dataset.category;
+                    option.style.display = (category === 'all' || productCategory === category) ? '' : 'none';
+                });
+            });
+        });
+    });
+
+    // Quick Add Products
+    const quickAddButtons = document.querySelectorAll('.quick-add-product');
+    quickAddButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const productPrice = this.dataset.productPrice;
+            
+            // Click the add item button if no empty rows exist
+            const emptySelects = Array.from(document.querySelectorAll('.product-select')).filter(select => !select.value);
+            if (emptySelects.length === 0) {
+                document.getElementById('addItem').click();
+            }
+            
+            // Get the last empty product select
+            const lastEmptySelect = Array.from(document.querySelectorAll('.product-select')).find(select => !select.value);
+            
+            if (lastEmptySelect) {
+                // Set the value and trigger change event
+                lastEmptySelect.value = productId;
+                
+                // Create and dispatch a change event
+                const event = new Event('change', { bubbles: true });
+                lastEmptySelect.dispatchEvent(event);
+                
+                // Find the quantity input in the same row and focus it
+                const row = lastEmptySelect.closest('.bg-gray-50');
+                if (row) {
+                    const quantityInput = row.querySelector('.quantity-input');
+                    if (quantityInput) {
+                        quantityInput.focus();
+                        quantityInput.select();
+                    }
+                }
+                
+                // Scroll the new row into view
+                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+    });
+
+    // Initialize with any pre-filled data
+    const initialData = {{ initial_data|default:'{}' | safe }};
+    if (initialData.items && initialData.items.length > 0) {
+        // Remove any existing items
+        const orderItems = document.getElementById('orderItems');
+        orderItems.innerHTML = '';
+        
+        // Add items from initial data
+        initialData.items.forEach(item => {
+            document.getElementById('addItem').click();
+            const lastSelect = document.querySelector('.product-select:last-child');
+            if (lastSelect) {
+                lastSelect.value = item.product_id;
+                lastSelect.dispatchEvent(new Event('change'));
+                
+                const quantityInput = lastSelect.closest('.bg-gray-50').querySelector('.quantity-input');
+                if (quantityInput) {
+                    quantityInput.value = item.quantity;
+                    quantityInput.dispatchEvent(new Event('change'));
+                }
+            }
+        });
+        
+        // Set client information if available
+        if (initialData.client_id) {
+            const clientSelect = document.getElementById('client_id');
+            if (clientSelect) {
+                clientSelect.value = initialData.client_id;
+                clientSelect.dispatchEvent(new Event('change'));
+            }
+        }
+    }
+
+    // Cache products for offline use
+    fetch('{% url "mobile_pos:api_products" %}')
+        .then(response => response.json())
+        .then(products => cacheProducts(products))
+        .catch(console.error);
+
+    // Handle form submission
+    const form = document.getElementById('orderForm');
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const orderData = {
+            client_name: formData.get('client_name'),
+            items: Array.from(document.querySelectorAll('.product-select')).map(select => ({
+                product_id: select.value,
+                quantity: parseInt(select.closest('.bg-gray-50').querySelector('.quantity-input').value),
+                price: parseFloat(select.closest('.bg-gray-50').querySelector('.unit-price').textContent.replace(' MAD', ''))
+            })),
+            total_amount: parseFloat(document.getElementById('totalAmount').textContent)
+        };
+
+        try {
+            if (navigator.onLine) {
+                // Online submission
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    window.location.href = result.redirect_url;
+                } else {
+                    throw new Error('Failed to submit order');
+                }
+            } else {
+                // Offline submission
+                await saveOrderForSync(orderData);
+                alert('Order saved for sync when online');
+                form.reset();
+                document.getElementById('orderItems').innerHTML = '';
+                updateTotal();
+            }
+        } catch (error) {
+            console.error('Error submitting order:', error);
+            alert('Failed to submit order. Please try again.');
+        }
+    });
+
+    // Load products from cache if offline
+    if (!navigator.onLine) {
+        getCachedProducts().then(products => {
+            productsList = products;
+            updateProductsList();
+        }).catch(console.error);
+    }
+});
 </script>
 {% endblock %}
 
 {% block inline_js %}
+// Gestion de la sélection du client
+document.getElementById('client_id').addEventListener('change', function() {
+    var selectedOption = this.options[this.selectedIndex];
+    var nameInput = document.getElementById('client_name');
+    var contactInput = document.getElementById('client_contact');
+    
+    if (this.value) {
+        // Si un client est sélectionné, remplir ses informations
+        nameInput.value = selectedOption.dataset.name || '';
+        contactInput.value = selectedOption.dataset.contact || '';
+        
+        // Désactiver les champs car on utilise les données existantes
+        nameInput.readOnly = true;
+        contactInput.readOnly = true;
+        
+        // Ajouter un retour visuel pour les champs remplis automatiquement
+        nameInput.classList.add('bg-gray-50');
+        contactInput.classList.add('bg-gray-50');
+    } else {
+        // Si "Nouveau client" est sélectionné, vider et activer les champs
+        nameInput.value = '';
+        contactInput.value = '';
+        
+        // Activer les champs pour la saisie manuelle
+        nameInput.readOnly = false;
+        contactInput.readOnly = false;
+        
+        // Supprimer le retour visuel
+        nameInput.classList.remove('bg-gray-50');
+        contactInput.classList.remove('bg-gray-50');
+    }
+});
+
 var productsData = [
 {% for product in products %}
     {
@@ -89,30 +533,72 @@ var productsData = [
 
 function createOrderItem() {
     var itemDiv = document.createElement('div');
-    itemDiv.className = 'bg-gray-50 rounded-lg p-4';
+    itemDiv.className = 'bg-gray-50 rounded-lg p-4 border border-gray-200';
 
     var productOptions = productsData.map(function(p) {
-        return '<option value="' + p.id + '" data-price="' + p.price + '">' + p.name + ' - ' + p.price + ' MAD</option>';
+        return '<option value="' + p.id + '" data-price="' + p.price + '">' + p.name + '</option>';
     }).join('');
 
     itemDiv.innerHTML = [
         '<div class="grid grid-cols-1 md:grid-cols-12 gap-4">',
-            '<div class="md:col-span-6">',
-                '<label class="block text-sm font-medium text-gray-700 mb-1">Product</label>',
-                '<select class="product-select w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" name="product_id[]" required>',
-                    '<option value="">Select a product</option>',
-                    productOptions,
-                '</select>',
-            '</div>',
-            '<div class="md:col-span-4">',
-                '<label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>',
-                '<input type="number" class="quantity-input w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" name="quantity[]" value="1" min="1" required>',
+            '<div class="md:col-span-5">',
+                '<div class="space-y-1">',
+                    '<label class="block text-sm font-medium text-gray-700">Sélectionner un Produit</label>',
+                    '<div class="relative">',
+                        '<select class="product-select w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-8 appearance-none bg-white" name="product_id[]" required>',
+                            '<option value="">Choisir un produit...</option>',
+                            productOptions,
+                        '</select>',
+                        '<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">',
+                            '<span class="text-gray-500">📦</span>',
+                        '</div>',
+                        '<div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">',
+                            '<svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">',
+                                '<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />',
+                            '</svg>',
+                        '</div>',
+                    '</div>',
+                '</div>',
             '</div>',
             '<div class="md:col-span-2">',
-                '<label class="block text-sm font-medium text-gray-700 mb-1">&nbsp;</label>',
-                '<button type="button" class="remove-item w-full px-3 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-colors">',
-                    'Remove',
-                '</button>',
+                '<div class="space-y-1">',
+                    '<label class="block text-sm font-medium text-gray-700">Prix Unitaire</label>',
+                    '<div class="relative rounded-lg shadow-sm">',
+                        '<input type="text" class="unit-price w-full rounded-lg border-gray-300 bg-gray-50 pl-8" readonly>',
+                        '<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">',
+                            '<span class="text-gray-500">💰</span>',
+                        '</div>',
+                    '</div>',
+                '</div>',
+            '</div>',
+            '<div class="md:col-span-2">',
+                '<div class="space-y-1">',
+                    '<label class="block text-sm font-medium text-gray-700">Quantité</label>',
+                    '<div class="relative rounded-lg shadow-sm">',
+                        '<input type="number" class="quantity-input w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pl-8" name="quantity[]" value="1" min="1" required>',
+                        '<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">',
+                            '<span class="text-gray-500">#</span>',
+                        '</div>',
+                    '</div>',
+                '</div>',
+            '</div>',
+            '<div class="md:col-span-2">',
+                '<div class="space-y-1">',
+                    '<label class="block text-sm font-medium text-gray-700">Total</label>',
+                    '<div class="relative rounded-lg shadow-sm">',
+                        '<input type="text" class="item-total w-full rounded-lg border-gray-300 bg-gray-50 pl-8" readonly>',
+                        '<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">',
+                            '<span class="text-gray-500">💵</span>',
+                        '</div>',
+                    '</div>',
+                '</div>',
+            '</div>',
+            '<div class="md:col-span-1">',
+                '<div class="h-full flex items-end">',
+                    '<button type="button" class="remove-item w-full px-3 py-2 border border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2">',
+                        '<span class="text-sm" title="Supprimer">🗑️</span>',
+                    '</button>',
+                '</div>',
             '</div>',
         '</div>'
     ].join('');
@@ -127,11 +613,37 @@ function createOrderItem() {
 
     var productSelect = itemDiv.querySelector('.product-select');
     var quantityInput = itemDiv.querySelector('.quantity-input');
+    var unitPriceInput = itemDiv.querySelector('.unit-price');
+    var itemTotalInput = itemDiv.querySelector('.item-total');
+    
+    function updateItemPrices() {
+        var selectedOption = productSelect.options[productSelect.selectedIndex];
+        var quantity = parseInt(quantityInput.value) || 0;
+        
+        if (selectedOption && selectedOption.value && selectedOption.dataset.price) {
+            var price = parseFloat(selectedOption.dataset.price);
+            unitPriceInput.value = price.toFixed(2) + ' MAD';
+            var total = price * quantity;
+            itemTotalInput.value = total.toFixed(2) + ' MAD';
+        } else {
+            unitPriceInput.value = '';
+            itemTotalInput.value = '';
+        }
+    }
     
     if (productSelect && quantityInput) {
-        productSelect.addEventListener('change', updateTotal);
-        quantityInput.addEventListener('change', updateTotal);
-        quantityInput.addEventListener('input', updateTotal);
+        productSelect.addEventListener('change', function() {
+            updateItemPrices();
+            updateTotal();
+        });
+        quantityInput.addEventListener('change', function() {
+            updateItemPrices();
+            updateTotal();
+        });
+        quantityInput.addEventListener('input', function() {
+            updateItemPrices();
+            updateTotal();
+        });
     }
 
     return itemDiv;
@@ -169,7 +681,7 @@ if (addItemButton && orderItemsContainer) {
         updateTotal();
     });
 
-    // Add initial item
+    // Ajouter le premier article
     addItemButton.click();
 }
 {% endblock %} 

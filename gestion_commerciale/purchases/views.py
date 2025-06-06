@@ -33,6 +33,10 @@ from django.db.models import Q, F
 from .models import Purchase
 from suppliers.models import Supplier
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
+
+from inventory.models import Stock, Warehouse, StockMovement
+from django.db.models import F
 
 def purchase_list_view(request):
     purchases = Purchase.objects.select_related('supplier').all()
@@ -80,7 +84,7 @@ def purchase_list_view(request):
         }
     })
 
-# Détail d’un achat
+# Détail d'un achat
 def purchase_detail(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     items = purchase.items.select_related("product")
@@ -152,24 +156,28 @@ def purchase_create(request):
     })
 
 # Ajouter un paiement fournisseur
+@login_required
 def add_supplier_payment(request, purchase_id):
-    purchase = get_object_or_404(Purchase, pk=purchase_id)
-    if request.method == "POST":
+    purchase = get_object_or_404(Purchase, id=purchase_id)
+    
+    if request.method == 'POST':
         form = SupplierPaymentForm(request.POST)
         if form.is_valid():
             payment = form.save(commit=False)
             payment.purchase = purchase
             payment.save()
-            # Mise à jour du montant payé
-            purchase.amount_paid += payment.amount
-            purchase.save()
+            
+            # Update the purchase's amount_paid
+            purchase.update_amount_paid()
+            
             messages.success(request, "Paiement enregistré avec succès.")
-            return redirect("purchases:purchase_detail", pk=purchase.pk)
+            return redirect('purchases:purchase_detail', pk=purchase.id)
     else:
         form = SupplierPaymentForm()
-    return render(request, "purchases/add_payment.html", {
-        "form": form,
-        "purchase": purchase
+    
+    return render(request, 'purchases/add_payment.html', {
+        'purchase': purchase,
+        'form': form
     })
 
 @require_GET
@@ -223,9 +231,6 @@ def purchases_due_list(request):
         "today": today,
     })
 
-from inventory.models import Stock, Warehouse, StockMovement
-from django.db.models import F
-
 def receive_purchase(request, pk):
     purchase = get_object_or_404(Purchase, pk=pk)
     if request.method == "POST":
@@ -235,16 +240,7 @@ def receive_purchase(request, pk):
             return redirect("purchases:purchase_detail", pk=purchase.pk)
 
         for item in purchase.items.all():
-            stock, created = Stock.objects.get_or_create(
-                product=item.product,
-                warehouse=warehouse,
-                defaults={"quantity": item.quantity}
-            )
-            if not created:
-                stock.quantity += item.quantity
-                stock.save()
-
-            # ✅ Ajouter le mouvement de stock
+            # Create stock movement - the signal will handle the stock update
             StockMovement.objects.create(
                 product=item.product,
                 warehouse=warehouse,
@@ -256,7 +252,7 @@ def receive_purchase(request, pk):
 
         purchase.status = "received"
         purchase.save()
-        messages.success(request, "Commande reçue, stock mis à jour, mouvement enregistré.")
+        messages.success(request, "Commande reçue et stock mis à jour.")
         return redirect("purchases:purchase_detail", pk=purchase.pk)
 
     return render(request, "purchases/receive_confirmation.html", {"purchase": purchase})

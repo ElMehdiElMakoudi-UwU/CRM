@@ -3,46 +3,166 @@
 
 {% block title %}{% block inner_title %}Mobile POS{% endblock %} - Gestion Commerciale{% endblock %}
 
+{# Add Service Worker Registration #}
+{% block extra_head %}
+<style>
+    /* Remove sidebar margin on desktop */
+    @media (min-width: 768px) {
+        .md\:ml-64 {
+            margin-left: 0 !important;
+        }
+    }
+</style>
+<script>
+    // Register Service Worker for offline support
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('{% url "mobile_pos:sw.js" %}').then(function(registration) {
+                console.log('ServiceWorker registration successful');
+            }).catch(function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
+
+    // Check online/offline status
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    function updateOnlineStatus(event) {
+        const status = navigator.onLine ? 'online' : 'offline';
+        const statusBar = document.getElementById('connection-status');
+        
+        if (statusBar) {
+            statusBar.className = `fixed top-0 left-0 right-0 text-center py-1 text-sm z-50 ${
+                status === 'online' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-black'
+            }`;
+            statusBar.textContent = status === 'online' ? 
+                '✅ Connecté' : 
+                '⚠️ Mode hors ligne - Les modifications seront synchronisées une fois la connexion rétablie';
+            
+            if (status === 'offline') {
+                statusBar.style.display = 'block';
+            } else {
+                setTimeout(() => {
+                    statusBar.style.display = 'none';
+                }, 3000);
+            }
+        }
+    }
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="p-4 md:p-6 space-y-6">
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 md:p-8 text-white shadow-lg">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div class="space-y-2">
-                <h1 class="text-2xl md:text-3xl font-bold">{% block header_title %}Mobile POS{% endblock %}</h1>
-                <p class="text-blue-100">{{ now|date:"l j F Y" }}</p>
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Point de Vente Mobile{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-sm">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 justify-between">
+                    <div class="flex">
+                        <div class="flex flex-shrink-0 items-center">
+                            <a href="{% url 'mobile_pos:dashboard' %}" class="text-2xl font-bold text-indigo-600">POS</a>
+                        </div>
+                        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                            <a href="{% url 'mobile_pos:create_order' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'create_order' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Nouvelle vente</a>
+                            <a href="{% url 'mobile_pos:order_history' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'order_history' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Historique</a>
+                            <a href="{% url 'mobile_pos:dashboard' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'dashboard' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Tableau de bord</a>
+                        </div>
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                        <!-- Profile dropdown -->
+                        <div class="relative ml-3">
+                            <button type="button" class="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown">
+                                <span class="sr-only">Open user menu</span>
+                                <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                    <span class="text-indigo-800 font-medium">{{ user.username|slice:":2"|upper }}</span>
+                                </div>
+                            </button>
+                            <!-- Dropdown menu -->
+                            <div class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow" id="user-dropdown">
+                                <div class="py-3 px-4">
+                                    <span class="block text-sm font-medium text-gray-900 truncate">{{ user.get_full_name|default:user.username }}</span>
+                                    <span class="block text-sm text-gray-500 truncate">{{ user.email }}</span>
+                                </div>
+                                <ul class="py-1" aria-labelledby="user-menu-button">
+                                    <li>
+                                        <a href="{% url 'users:profile' %}" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Mon profil</a>
+                                    </li>
+                                    <li>
+                                        <a href="{% url 'logout' %}" class="block py-2 px-4 text-sm text-red-600 hover:bg-gray-100">Déconnexion</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Mobile menu button -->
+                    <div class="flex items-center sm:hidden">
+                        <button type="button" class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" aria-controls="mobile-menu" aria-expanded="false" data-collapse-toggle="mobile-menu">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="flex flex-wrap gap-3">
-                {% block header_actions %}{% endblock %}
+
+            <!-- Mobile menu -->
+            <div class="hidden sm:hidden" id="mobile-menu">
+                <div class="space-y-1 pb-3 pt-2">
+                    <a href="{% url 'mobile_pos:create_order' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'create_order' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Nouvelle vente</a>
+                    <a href="{% url 'mobile_pos:order_history' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'order_history' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Historique</a>
+                    <a href="{% url 'mobile_pos:dashboard' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'dashboard' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Tableau de bord</a>
+                </div>
+                <div class="border-t border-gray-200 pb-3 pt-4">
+                    <div class="flex items-center px-4">
+                        <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <span class="text-indigo-800 font-medium">{{ user.username|slice:":2"|upper }}</span>
+                        </div>
+                        <div class="ml-3">
+                            <div class="text-base font-medium text-gray-800">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="text-sm font-medium text-gray-500">{{ user.email }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 space-y-1">
+                        <a href="{% url 'users:profile' %}" class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800">Mon profil</a>
+                        <a href="{% url 'logout' %}" class="block px-4 py-2 text-base font-medium text-red-600 hover:bg-gray-100">Déconnexion</a>
+                    </div>
+                </div>
             </div>
+        </nav>
+
+        <!-- Page header -->
+        {% if messages %}
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+            {% for message in messages %}
+            <div class="rounded-md p-4 mb-4 {% if message.tags == 'success' %}bg-green-50 text-green-700{% elif message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-blue-50 text-blue-700{% endif %}" role="alert">
+                {{ message }}
+            </div>
+            {% endfor %}
         </div>
+        {% endif %}
+
+        <main>
+            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
     </div>
 
-    <!-- Messages -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="rounded-lg p-4 {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %} flex justify-between items-center">
-                <div class="flex items-center">
-                    {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% else %}ℹ️{% endif %}
-                    <span class="ml-2">{{ message }}</span>
-                </div>
-                <button type="button" class="text-gray-400 hover:text-gray-500" onclick="this.parentElement.remove()">
-                    ×
-                </button>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <!-- Main Content -->
-    {% block inner_content %}
-    {% endblock %}
-
-    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
     {% block extra_js %}{% endblock %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            {% block inline_js %}{% endblock %}
-        });
-    </script>
-</div>
+</body>
+</html>
 {% endblock %} 

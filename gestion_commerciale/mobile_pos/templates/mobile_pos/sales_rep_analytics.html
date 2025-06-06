@@ -1,0 +1,157 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block inner_title %}Sales Rep Analytics{% endblock %}
+
+{% block inner_content %}
+<div class="p-4">
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Sales Rep Analytics</h2>
+        <p class="text-gray-600">Performance metrics from {{ start_date|date:"M d, Y" }} to {{ end_date|date:"M d, Y" }}</p>
+    </div>
+
+    <!-- Performance Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {% for rep in performance %}
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ rep.user__username }}</h3>
+            <div class="space-y-3">
+                <div>
+                    <p class="text-sm text-gray-500">Total Sales</p>
+                    <p class="text-xl font-bold text-blue-600">{{ rep.total_sales|floatformat:2 }} MAD</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Total Orders</p>
+                    <p class="text-xl font-bold text-green-600">{{ rep.total_orders }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Daily Average</p>
+                    <p class="text-xl font-bold text-purple-600">{{ rep.daily_avg_sales|floatformat:2 }} MAD</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Conversion Rate</p>
+                    <p class="text-xl font-bold text-orange-600">{{ rep.avg_conversion|floatformat:1 }}%</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Daily Sales Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Sales by Rep</h3>
+            <canvas id="dailySalesChart" height="300"></canvas>
+        </div>
+
+        <!-- Daily Orders Chart -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Orders by Rep</h3>
+            <canvas id="dailyOrdersChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dailyData = {{ daily_performance|safe }};
+    
+    // Process data for charts
+    const dates = [...new Set(dailyData.map(d => d.date))];
+    const reps = [...new Set(dailyData.map(d => d.user__username))];
+    
+    const salesData = {};
+    const ordersData = {};
+    
+    reps.forEach(rep => {
+        salesData[rep] = dates.map(date => {
+            const entry = dailyData.find(d => d.date === date && d.user__username === rep);
+            return entry ? entry.daily_sales : 0;
+        });
+        
+        ordersData[rep] = dates.map(date => {
+            const entry = dailyData.find(d => d.date === date && d.user__username === rep);
+            return entry ? entry.daily_orders : 0;
+        });
+    });
+    
+    // Generate random colors for each rep
+    const colors = reps.map(() => 
+        `hsla(${Math.random() * 360}, 70%, 50%, 0.8)`
+    );
+    
+    // Sales Chart
+    new Chart(document.getElementById('dailySalesChart'), {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: reps.map((rep, index) => ({
+                label: rep,
+                data: salesData[rep],
+                borderColor: colors[index],
+                backgroundColor: colors[index].replace('0.8', '0.1'),
+                fill: true,
+                tension: 0.4
+            }))
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Sales (MAD)'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Orders Chart
+    new Chart(document.getElementById('dailyOrdersChart'), {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: reps.map((rep, index) => ({
+                label: rep,
+                data: ordersData[rep],
+                backgroundColor: colors[index],
+            }))
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Orders'
+                    },
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

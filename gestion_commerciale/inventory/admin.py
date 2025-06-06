@@ -9,7 +9,7 @@ class WarehouseAdmin(admin.ModelAdmin):
 
 @admin.register(Stock)
 class StockAdmin(admin.ModelAdmin):
-    list_display = ('product', 'warehouse', 'quantity', 'reorder_threshold', 'last_updated')
+    list_display = ('product', 'warehouse', 'quantity', 'last_updated')
     list_filter = ('warehouse', 'product')
     search_fields = ('product__name',)
 

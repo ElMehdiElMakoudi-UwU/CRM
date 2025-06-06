@@ -30,6 +30,7 @@ class Product(models.Model):
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    reorder_threshold = models.DecimalField("Seuil de réapprovisionnement", max_digits=10, decimal_places=2, default=0.00)
 
     expiration_date = models.DateField("Date d'expiration", blank=True, null=True)
     is_featured = models.BooleanField("Produit en vedette", default=False)
@@ -57,8 +58,14 @@ class Product(models.Model):
 
     @property
     def current_stock(self):
+        """Get the current stock quantity from the default warehouse."""
         from inventory.models import Stock
         if self.default_warehouse:
             stock = Stock.objects.filter(product=self, warehouse=self.default_warehouse).first()
             return stock.quantity if stock else 0
         return 0
+
+    @current_stock.setter
+    def current_stock(self, value):
+        """This is a no-op setter to prevent AttributeError when Django tries to set the property."""
+        pass  # We don't actually want to set anything here

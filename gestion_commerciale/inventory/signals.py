@@ -2,7 +2,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import StockMovement, Stock, StockAlert
 from decimal import Decimal
-from decimal import Decimal
 
 @receiver(post_save, sender=StockMovement)
 def update_stock_on_movement(sender, instance, created, **kwargs):
@@ -14,7 +13,7 @@ def update_stock_on_movement(sender, instance, created, **kwargs):
         warehouse=instance.warehouse
     )
 
-    # S’assurer que stock.quantity est bien initialisé
+    # S'assurer que stock.quantity est bien initialisé
     if stock.quantity is None:
         stock.quantity = Decimal('0.00')
 
@@ -27,8 +26,10 @@ def update_stock_on_movement(sender, instance, created, **kwargs):
 
     stock.save()
 
-    if stock.quantity <= stock.reorder_threshold:
+    if stock.quantity <= stock.product.reorder_threshold:
         StockAlert.objects.create(
             product=instance.product,
+            warehouse=instance.warehouse,
             message=f"Le stock est bas : {stock.quantity} unités restantes.",
+            is_resolved=False
         )

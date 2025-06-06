@@ -72,6 +72,11 @@
         <label for="id_default_warehouse" class="block text-sm font-medium mb-1">Dépôt par défaut</label>
         {{ form.default_warehouse|add_class:"border border-gray-300 rounded w-full p-2" }}
       </div>
+
+      <div>
+        <label for="id_reorder_threshold" class="block text-sm font-medium mb-1">Seuil de réapprovisionnement</label>
+        {{ form.reorder_threshold|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
     </div>
 
     <!-- Groupe 4 : Divers -->

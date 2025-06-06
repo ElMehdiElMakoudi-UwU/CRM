@@ -7,11 +7,11 @@ class PurchaseItemInline(admin.TabularInline):
 
 class SupplierPaymentInline(admin.TabularInline):
     model = SupplierPayment
-    extra = 0
+    extra = 1
 
 @admin.register(Purchase)
 class PurchaseAdmin(admin.ModelAdmin):
-    list_display = ("id", "supplier", "date", "status", "total_amount", "amount_paid", "get_balance")
+    list_display = ("id", "supplier", "date", "status", "total_amount", "get_balance")
     list_filter = ("status", "date", "supplier")
     search_fields = ("supplier__name",)
     inlines = [PurchaseItemInline, SupplierPaymentInline]

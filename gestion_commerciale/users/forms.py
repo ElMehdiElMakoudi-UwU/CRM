@@ -7,9 +7,14 @@ from .models import UserProfile
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['username', 'email', 'is_active']
+        fields = ['username', 'first_name', 'last_name', 'email']
 
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['role', 'avatar', 'active']
+        fields = ['role', 'phone', 'address']
+        labels = {
+            'role': 'Rôle',
+            'phone': 'Téléphone',
+            'address': 'Adresse'
+        }

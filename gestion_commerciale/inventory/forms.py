@@ -4,7 +4,7 @@ from .models import Stock, StockMovement, Warehouse
 class StockForm(forms.ModelForm):
     class Meta:
         model = Stock
-        fields = ['product', 'warehouse', 'quantity', 'reorder_threshold']
+        fields = ['product', 'warehouse', 'quantity']
 
 class StockMovementForm(forms.ModelForm):
     class Meta:

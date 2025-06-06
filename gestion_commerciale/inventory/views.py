@@ -5,17 +5,75 @@ from products.models import Product
 from .models import Stock, StockMovement, StockAlert, Warehouse
 from .forms import StockMovementForm, StockForm
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, F, Q
+from itertools import groupby
+from operator import attrgetter
 
 @login_required
 def stock_list_view(request):
     warehouse_id = request.GET.get('warehouse')
+    category_id = request.GET.get('category')
+    search = request.GET.get('search', '').strip()
+
+    # Base queryset
+    stocks = Stock.objects.select_related('product', 'warehouse').all()
+
+    # Apply filters
     if warehouse_id:
-        stocks = Stock.objects.select_related('product', 'warehouse').filter(warehouse_id=warehouse_id)
-    else:
-        stocks = Stock.objects.select_related('product', 'warehouse').all()
+        stocks = stocks.filter(warehouse_id=warehouse_id)
+    if category_id:
+        stocks = stocks.filter(product__category_id=category_id)
+    if search:
+        stocks = stocks.filter(
+            Q(product__name__icontains=search) |
+            Q(product__reference__icontains=search)
+        )
+
+    # Get all warehouses for the filter dropdown
     warehouses = Warehouse.objects.all()
-    return render(request, 'inventory/stock_list.html', {'stocks': stocks, 'warehouses': warehouses})
+    
+    # Get all categories for the filter dropdown - handle if category doesn't exist
+    try:
+        categories = Product.objects.values('category__id', 'category__name').distinct()
+    except:
+        categories = []
+
+    # Group stocks by product
+    stocks = stocks.order_by('product__name', 'warehouse__name')
+    grouped_stocks = {}
+    
+    for stock in stocks:
+        if stock.product_id not in grouped_stocks:
+            grouped_stocks[stock.product_id] = {
+                'product': stock.product,
+                'warehouses': {},
+                'total_quantity': 0,
+                'total_threshold': stock.product.reorder_threshold,
+                'any_below_threshold': False
+            }
+        
+        grouped_stocks[stock.product_id]['warehouses'][stock.warehouse_id] = {
+            'warehouse': stock.warehouse,
+            'quantity': stock.quantity,
+            'threshold': stock.product.reorder_threshold,
+            'is_below_threshold': stock.quantity <= stock.product.reorder_threshold
+        }
+        
+        grouped_stocks[stock.product_id]['total_quantity'] += stock.quantity
+        if stock.quantity <= stock.product.reorder_threshold:
+            grouped_stocks[stock.product_id]['any_below_threshold'] = True
+
+    context = {
+        'grouped_stocks': grouped_stocks,
+        'warehouses': warehouses,
+        'categories': categories,
+        'filters': {
+            'warehouse': warehouse_id,
+            'category': category_id,
+            'search': search
+        }
+    }
+    return render(request, 'inventory/stock_list.html', context)
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required

@@ -1,0 +1,126 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block inner_title %}Mode Hors Ligne{% endblock %}
+{% block header_title %}Mode Hors Ligne{% endblock %}
+
+{% block inner_content %}
+<div class="flex flex-col items-center justify-center py-12 px-4">
+    <div class="text-6xl mb-6">📶</div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-4 text-center">Mode Hors Ligne</h2>
+    <p class="text-gray-600 text-center mb-8">
+        Vous êtes actuellement hors ligne. Certaines fonctionnalités peuvent être limitées.
+        <br>Les modifications seront synchronisées une fois la connexion rétablie.
+    </p>
+    
+    <div class="w-full max-w-md space-y-4">
+        <!-- Cached Orders -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Commandes en Attente</h3>
+                <div id="pending-orders" class="space-y-3">
+                    <!-- Pending orders will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Actions -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Disponibles</h3>
+                <div class="space-y-3">
+                    <a href="{% url 'mobile_pos:create_order' %}" 
+                       class="block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors">
+                        Nouvelle Commande
+                    </a>
+                    <button type="button" 
+                            id="sync-button"
+                            class="block w-full text-center px-4 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                        Tenter la Synchronisation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const syncButton = document.getElementById('sync-button');
+    const pendingOrdersContainer = document.getElementById('pending-orders');
+
+    // Load pending orders from IndexedDB
+    function loadPendingOrders() {
+        if (!('indexedDB' in window)) return;
+
+        const request = indexedDB.open('MobilePOSDB', 1);
+        
+        request.onerror = function(event) {
+            console.error("Database error: " + event.target.error);
+        };
+
+        request.onsuccess = function(event) {
+            const db = event.target.result;
+            const transaction = db.transaction(['pendingOrders'], 'readonly');
+            const objectStore = transaction.objectStore('pendingOrders');
+            const orders = [];
+
+            objectStore.openCursor().onsuccess = function(event) {
+                const cursor = event.target.result;
+                if (cursor) {
+                    orders.push(cursor.value);
+                    cursor.continue();
+                } else {
+                    // Render orders
+                    if (orders.length === 0) {
+                        pendingOrdersContainer.innerHTML = `
+                            <p class="text-center text-gray-600">Aucune commande en attente</p>
+                        `;
+                    } else {
+                        pendingOrdersContainer.innerHTML = orders.map(order => `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium">${order.client_name}</p>
+                                    <p class="text-sm text-gray-600">${order.items.length} articles</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium">${order.total_amount} MAD</p>
+                                    <p class="text-xs text-gray-500">${new Date(order.created_at).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            };
+        };
+    }
+
+    // Try to sync with server
+    syncButton.addEventListener('click', function() {
+        if (!navigator.onLine) {
+            alert('Toujours hors ligne. Veuillez vérifier votre connexion internet.');
+            return;
+        }
+
+        syncButton.disabled = true;
+        syncButton.textContent = 'Synchronisation en cours...';
+
+        // Attempt to sync pending orders
+        syncPendingOrders().then(() => {
+            alert('Synchronisation réussie!');
+            loadPendingOrders(); // Reload the list
+        }).catch(error => {
+            alert('Erreur de synchronisation: ' + error.message);
+        }).finally(() => {
+            syncButton.disabled = false;
+            syncButton.textContent = 'Tenter la Synchronisation';
+        });
+    });
+
+    // Load pending orders on page load
+    loadPendingOrders();
+});
+</script>
+{% endblock %}
+{% endblock %} 
