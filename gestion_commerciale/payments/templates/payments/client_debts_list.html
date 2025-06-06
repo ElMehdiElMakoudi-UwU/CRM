@@ -1,100 +1,148 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Clients Débiteurs</h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Clients Débiteurs</h1>
+        <p class="mt-2 text-sm text-gray-600">Gérez et suivez les dettes de vos clients</p>
+    </div>
 
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white shadow rounded-lg p-6">
-            <p class="text-sm text-gray-500">Nombre de clients débiteurs</p>
-            <p class="text-3xl font-bold text-gray-800">{{ count_debtors }}</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition duration-300 hover:shadow-md">
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-blue-50 rounded-lg">
+                    <i data-lucide="users" class="h-6 w-6 text-blue-600"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Nombre de clients débiteurs</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">{{ count_debtors }}</p>
+                </div>
+            </div>
         </div>
-        <div class="bg-white shadow rounded-lg p-6">
-            <p class="text-sm text-gray-500">Montant total dû (DH)</p>
-            <p class="text-3xl font-bold text-red-600">{{ total_debt|floatformat:2 }}</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition duration-300 hover:shadow-md">
+            <div class="flex items-center space-x-4">
+                <div class="p-3 bg-red-50 rounded-lg">
+                    <i data-lucide="wallet" class="h-6 w-6 text-red-600"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Montant total dû (DH)</p>
+                    <p class="text-3xl font-bold text-red-600 mt-1">{{ total_debt|floatformat:2 }}</p>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Filters -->
-    <form method="get" class="bg-white shadow rounded-lg p-6 mb-8 space-y-4 md:space-y-0 md:flex md:items-end md:gap-6">
-        <div class="flex-1">
-            <label for="search" class="block text-sm font-medium text-gray-700">🔍 Rechercher un client</label>
-            <input type="text" name="search" id="search" value="{{ search_query }}"
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                   placeholder="Nom du client...">
-        </div>
-        <div class="flex-1">
-            <label for="segment" class="block text-sm font-medium text-gray-700">🎯 Segment</label>
-            <select name="segment" id="segment"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                <option value="">Tous les segments</option>
-                {% for s in segments %}
-                    <option value="{{ s.id }}" {% if selected_segment == s.id|stringformat:"s" %}selected{% endif %}>
-                        {{ s.name }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div>
-            <button type="submit"
-                    class="inline-flex items-center px-4 py-2 mt-1 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition">
-                Filtrer
-            </button>
-            <a href="{% url 'payments:export_clients_excel' %}?search={{ search_query }}&segment={{ selected_segment }}"
-                class="inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition mb-4">
-                📥 Exporter Excel
-            </a>
-            <a href="{% url 'payments:export_clients_pdf' %}?search={{ search_query }}&segment={{ selected_segment }}"
-                class="ml-2 inline-block bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">
-                🧾 Export PDF
-            </a>
-
-
-        </div>
-    </form>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <form method="get" class="space-y-4 md:space-y-0 md:flex md:items-end md:gap-6">
+            <div class="flex-1">
+                <label for="search" class="block text-sm font-medium text-gray-700">Rechercher un client</label>
+                <div class="mt-1 relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="h-5 w-5 text-gray-400"></i>
+                    </div>
+                    <input type="text" name="search" id="search" value="{{ search_query }}"
+                           class="block w-full pl-10 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Rechercher par nom...">
+                </div>
+            </div>
+            <div class="flex-1">
+                <label for="segment" class="block text-sm font-medium text-gray-700">Segment</label>
+                <div class="mt-1 relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="target" class="h-5 w-5 text-gray-400"></i>
+                    </div>
+                    <select name="segment" id="segment"
+                            class="block w-full pl-10 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Tous les segments</option>
+                        {% for s in segments %}
+                            <option value="{{ s.id }}" {% if selected_segment == s.id|stringformat:"s" %}selected{% endif %}>
+                                {{ s.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <button type="submit"
+                        class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    <i data-lucide="filter" class="h-4 w-4 mr-2"></i>
+                    Filtrer
+                </button>
+                <div class="flex gap-2">
+                    <a href="{% url 'payments:export_clients_excel' %}?search={{ search_query }}&segment={{ selected_segment }}"
+                       class="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                        <i data-lucide="file-spreadsheet" class="h-4 w-4 mr-2"></i>
+                        Excel
+                    </a>
+                    <a href="{% url 'payments:export_clients_pdf' %}?search={{ search_query }}&segment={{ selected_segment }}"
+                       class="inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        <i data-lucide="file-text" class="h-4 w-4 mr-2"></i>
+                        PDF
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
 
     <!-- Table -->
-    <div class="bg-white shadow overflow-hidden rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Nom</th>
-                    <th scope="col" class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Téléphone</th>
-                    <th scope="col" class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Solde dû (DH)</th>
-                    <th scope="col" class="px-6 py-3 text-right text-sm font-semibold text-gray-600">Action</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-                {% for client in clients %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm text-gray-900">{{ client.name }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ client.phone }}</td>
-                        <td class="px-6 py-4 text-sm font-semibold">
-                            {% if client.balance > client.alert_threshold %}
-                                <span class="text-red-600 bg-red-100 px-2 py-1 rounded">⚠ {{ client.balance }} DH</span>
-                            {% else %}
-                                {{ client.balance }} DH
-                            {% endif %}
-                        </td>                        
-                        <td class="px-6 py-4 text-right">
-                            <a href="{% url 'payments:client_payment_create' client.id %}"
-                               class="inline-block px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
-                                Effectuer un paiement
-                            </a>
-                            <a href="{% url 'payments:client_payment_history' client.id %}"
-                                class="ml-2 inline-block px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition">
-                                Voir historique
-                            </a>
-
-                        </td>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Téléphone</th>
+                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solde dû (DH)</th>
+                        <th scope="col" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center text-gray-500 py-6">Aucun client débiteur trouvé.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for client in clients %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ client.name }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-600">{{ client.phone }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if client.balance > client.alert_threshold %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                        <i data-lucide="alert-triangle" class="h-4 w-4 mr-1.5 text-red-600"></i>
+                                        {{ client.balance }} DH
+                                    </span>
+                                {% else %}
+                                    <span class="text-sm text-gray-600">{{ client.balance }} DH</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <a href="{% url 'payments:client_payment_create' client.id %}"
+                                   class="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                                    <i data-lucide="credit-card" class="h-4 w-4 mr-1.5"></i>
+                                    Paiement
+                                </a>
+                                <a href="{% url 'payments:client_payment_history' client.id %}"
+                                   class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                                    <i data-lucide="history" class="h-4 w-4 mr-1.5"></i>
+                                    Historique
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-10 text-center">
+                                <div class="flex flex-col items-center">
+                                    <i data-lucide="inbox" class="h-12 w-12 text-gray-400 mb-4"></i>
+                                    <p class="text-gray-500 text-sm">Aucun client débiteur trouvé</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

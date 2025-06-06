@@ -1,0 +1,134 @@
+{% extends 'mobile_pos/base.html' %}
+
+{% block inner_title %}Order #{{ order.id }}{% endblock %}
+{% block header_title %}Order #{{ order.id }}{% endblock %}
+
+{% block header_actions %}
+<form method="post" action="{% url 'mobile_pos:update_order_status' order.id %}" class="inline-block">
+    {% csrf_token %}
+    <select name="status" 
+            class="mr-2 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm"
+            onchange="this.form.submit()">
+        {% for status_code, status_label in order.ORDER_STATUS %}
+            <option value="{{ status_code }}" {% if order.status == status_code %}selected{% endif %}>
+                {{ status_label }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+<a href="{% url 'mobile_pos:order_list' %}" 
+   class="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+    Back to Orders
+</a>
+{% endblock %}
+
+{% block inner_content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Client Information -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Client Information</h3>
+            <dl class="space-y-3">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Name</dt>
+                    <dd class="mt-1 text-gray-900">{{ order.client_name }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Contact</dt>
+                    <dd class="mt-1 text-gray-900">{{ order.client_contact }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Order Date</dt>
+                    <dd class="mt-1 text-gray-900">{{ order.order_date|date:"F j, Y, g:i a" }}</dd>
+                </div>
+                {% if order.notes %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Notes</dt>
+                    <dd class="mt-1 text-gray-900">{{ order.notes }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+            <dl class="space-y-3">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Status</dt>
+                    <dd class="mt-1">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                            {% if order.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Total Amount</dt>
+                    <dd class="mt-1 text-2xl font-bold text-gray-900">{{ order.total_amount|floatformat:2 }} MAD</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Created</dt>
+                    <dd class="mt-1 text-gray-900">{{ order.created_at|date:"F j, Y, g:i a" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
+                    <dd class="mt-1 text-gray-900">{{ order.updated_at|date:"F j, Y, g:i a" }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Order Items -->
+<div class="mt-6 bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in order.items.all %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ item.product.name }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ item.quantity }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ item.unit_price|floatformat:2 }} MAD
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ item.subtotal|floatformat:2 }} MAD
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-50">
+                        <td colspan="3" class="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                            Total:
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                            {{ order.total_amount|floatformat:2 }} MAD
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

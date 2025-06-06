@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'configuration',
     'pos',
     'dashboard',
-    'django_htmx'
+    'django_htmx',
+    'mobile_pos',
 ]
 
 MIDDLEWARE = [
