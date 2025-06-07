@@ -18,20 +18,93 @@
                         <div class="flex flex-shrink-0 items-center">
                             <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">GC</a>
                         </div>
-                        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <div class="hidden sm:ml-6 sm:flex sm:space-x-4 items-center">
                             {% if user.is_authenticated %}
-                                <a href="{% url 'home' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'home' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Tableau de bord</a>
+                                <!-- Dashboard -->
+                                <a href="{% url 'home' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'home' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium">
+                                    Tableau de bord
+                                </a>
+
+                                <!-- Sales & POS Dropdown -->
+                                <div class="relative">
+                                    <button type="button" class="inline-flex items-center border-b-2 {% if 'sales' in request.resolver_match.namespace or 'pos' in request.resolver_match.namespace %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="sales-menu-button" aria-expanded="false" data-dropdown-toggle="sales-dropdown">
+                                        Ventes & POS
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="hidden absolute z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="sales-dropdown">
+                                        <a href="{% url 'sales:sale_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des ventes</a>
+                                        <a href="{% url 'sales:sale_create' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nouvelle vente</a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="{% url 'pos:interface' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">POS Interface</a>
+                                        <a href="{% url 'pos:daily_recap' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Récapitulatif journalier</a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="{% url 'mobile_pos:dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mobile POS</a>
+                                        <a href="{% url 'mobile_pos:analytics_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Analytiques Mobile</a>
+                                    </div>
+                                </div>
+
+                                <!-- Products & Inventory Dropdown -->
+                                <div class="relative">
+                                    <button type="button" class="inline-flex items-center border-b-2 {% if 'products' in request.resolver_match.namespace or 'inventory' in request.resolver_match.namespace %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="inventory-menu-button" aria-expanded="false" data-dropdown-toggle="inventory-dropdown">
+                                        Produits & Stock
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="hidden absolute z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="inventory-dropdown">
+                                        <a href="{% url 'products:product-list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des produits</a>
+                                        <a href="{% url 'products:product-create' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nouveau produit</a>
+                                        <a href="{% url 'products:category-list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Catégories</a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="{% url 'inventory:stock_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">État du stock</a>
+                                        <a href="{% url 'inventory:stock_movement_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mouvements</a>
+                                        <a href="{% url 'inventory:stock_alerts' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Alertes stock</a>
+                                        <a href="{% url 'inventory:warehouse_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Entrepôts</a>
+                                    </div>
+                                </div>
+
+                                <!-- Clients & Payments Dropdown -->
+                                <div class="relative">
+                                    <button type="button" class="inline-flex items-center border-b-2 {% if 'clients' in request.resolver_match.namespace or 'payments' in request.resolver_match.namespace %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="clients-menu-button" aria-expanded="false" data-dropdown-toggle="clients-dropdown">
+                                        Clients & Paiements
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="hidden absolute z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="clients-dropdown">
+                                        <a href="{% url 'clients:client_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des clients</a>
+                                        <a href="{% url 'clients:client_create' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nouveau client</a>
+                                        <a href="{% url 'clients:segment_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Segments</a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="{% url 'payments:client_debts_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dettes clients</a>
+                                        <a href="{% url 'payments:client_payment_history' client_id=0 %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Historique paiements</a>
+                                    </div>
+                                </div>
+
+                                <!-- Suppliers & Purchases Dropdown -->
+                                <div class="relative">
+                                    <button type="button" class="inline-flex items-center border-b-2 {% if 'suppliers' in request.resolver_match.namespace or 'purchases' in request.resolver_match.namespace %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="suppliers-menu-button" aria-expanded="false" data-dropdown-toggle="suppliers-dropdown">
+                                        Fournisseurs & Achats
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="hidden absolute z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="suppliers-dropdown">
+                                        <a href="{% url 'suppliers:supplier_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des fournisseurs</a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="{% url 'purchases:purchase_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des achats</a>
+                                    </div>
+                                </div>
+
+                                <!-- Admin Dropdown -->
                                 {% if user.profile.role in 'admin,manager' %}
-                                <a href="{% url 'users:user_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'user_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Utilisateurs</a>
+                                <div class="relative">
+                                    <button type="button" class="inline-flex items-center border-b-2 {% if 'users' in request.resolver_match.namespace or request.resolver_match.url_name == 'admin:index' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="admin-menu-button" aria-expanded="false" data-dropdown-toggle="admin-dropdown">
+                                        Administration
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="hidden absolute z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="admin-dropdown">
+                                        <a href="{% url 'users:user_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gestion utilisateurs</a>
+                                        <a href="{% url 'users:user_create' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nouvel utilisateur</a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="/admin/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Interface admin</a>
+                                    </div>
+                                </div>
                                 {% endif %}
-                                <a href="{% url 'sales:sale_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'sale_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Ventes</a>
-                                <a href="{% url 'products:product-list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'product-list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Produits</a>
-                                <a href="{% url 'clients:client_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'client_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Clients</a>
-                                <a href="{% url 'inventory:stock_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'stock_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Stock</a>
-                                <a href="{% url 'suppliers:supplier_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'supplier_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Fournisseurs</a>
-                                <a href="{% url 'purchases:purchase_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'purchase_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Achats</a>
-                                <a href="{% url 'payments:client_debts_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'client_debts_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Paiements</a>
-                                <a href="{% url 'pos:interface' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'interface' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">POS</a>
                             {% endif %}
                         </div>
                     </div>
@@ -81,20 +154,86 @@
             <div class="hidden sm:hidden" id="mobile-menu">
                 <div class="space-y-1 pb-3 pt-2">
                     {% if user.is_authenticated %}
+                        <!-- Dashboard -->
                         <a href="{% url 'home' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'home' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Tableau de bord</a>
+
+                        <!-- Sales & POS Section -->
+                        <div class="border-l-4 border-transparent">
+                            <button type="button" class="flex w-full items-center justify-between py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700" data-collapse-toggle="mobile-sales-menu">
+                                <span>Ventes & POS</span>
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div class="hidden space-y-1" id="mobile-sales-menu">
+                                <a href="{% url 'sales:sale_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des ventes</a>
+                                <a href="{% url 'sales:sale_create' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Nouvelle vente</a>
+                                <a href="{% url 'pos:interface' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">POS Interface</a>
+                                <a href="{% url 'pos:daily_recap' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Récapitulatif journalier</a>
+                                <a href="{% url 'mobile_pos:dashboard' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Mobile POS</a>
+                                <a href="{% url 'mobile_pos:analytics_dashboard' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Analytiques Mobile</a>
+                            </div>
+                        </div>
+
+                        <!-- Products & Inventory Section -->
+                        <div class="border-l-4 border-transparent">
+                            <button type="button" class="flex w-full items-center justify-between py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700" data-collapse-toggle="mobile-inventory-menu">
+                                <span>Produits & Stock</span>
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div class="hidden space-y-1" id="mobile-inventory-menu">
+                                <a href="{% url 'products:product-list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des produits</a>
+                                <a href="{% url 'products:product-create' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Nouveau produit</a>
+                                <a href="{% url 'products:category-list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Catégories</a>
+                                <a href="{% url 'inventory:stock_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">État du stock</a>
+                                <a href="{% url 'inventory:stock_movement_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Mouvements</a>
+                                <a href="{% url 'inventory:stock_alerts' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Alertes stock</a>
+                                <a href="{% url 'inventory:warehouse_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Entrepôts</a>
+                            </div>
+                        </div>
+
+                        <!-- Clients & Payments Section -->
+                        <div class="border-l-4 border-transparent">
+                            <button type="button" class="flex w-full items-center justify-between py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700" data-collapse-toggle="mobile-clients-menu">
+                                <span>Clients & Paiements</span>
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div class="hidden space-y-1" id="mobile-clients-menu">
+                                <a href="{% url 'clients:client_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des clients</a>
+                                <a href="{% url 'clients:client_create' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Nouveau client</a>
+                                <a href="{% url 'clients:segment_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Segments</a>
+                                <a href="{% url 'payments:client_debts_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Dettes clients</a>
+                                <a href="{% url 'payments:client_payment_history' client_id=0 %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Historique paiements</a>
+                            </div>
+                        </div>
+
+                        <!-- Suppliers & Purchases Section -->
+                        <div class="border-l-4 border-transparent">
+                            <button type="button" class="flex w-full items-center justify-between py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700" data-collapse-toggle="mobile-suppliers-menu">
+                                <span>Fournisseurs & Achats</span>
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div class="hidden space-y-1" id="mobile-suppliers-menu">
+                                <a href="{% url 'suppliers:supplier_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des fournisseurs</a>
+                                <a href="{% url 'purchases:purchase_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des achats</a>
+                            </div>
+                        </div>
+
+                        <!-- Admin Section -->
                         {% if user.profile.role in 'admin,manager' %}
-                        <a href="{% url 'users:user_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'user_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Utilisateurs</a>
+                        <div class="border-l-4 border-transparent">
+                            <button type="button" class="flex w-full items-center justify-between py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700" data-collapse-toggle="mobile-admin-menu">
+                                <span>Administration</span>
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div class="hidden space-y-1" id="mobile-admin-menu">
+                                <a href="{% url 'users:user_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Gestion utilisateurs</a>
+                                <a href="{% url 'users:user_create' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Nouvel utilisateur</a>
+                                <a href="/admin/" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Interface admin</a>
+                            </div>
+                        </div>
                         {% endif %}
-                        <a href="{% url 'sales:sale_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'sale_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Ventes</a>
-                        <a href="{% url 'products:product-list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'product-list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Produits</a>
-                        <a href="{% url 'clients:client_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'client_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Clients</a>
-                        <a href="{% url 'inventory:stock_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'stock_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Stock</a>
-                        <a href="{% url 'suppliers:supplier_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'supplier_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Fournisseurs</a>
-                        <a href="{% url 'purchases:purchase_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'purchase_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Achats</a>
-                        <a href="{% url 'payments:client_debts_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'client_debts_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Paiements</a>
-                        <a href="{% url 'pos:interface' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'interface' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">POS</a>
                     {% endif %}
                 </div>
+
                 {% if user.is_authenticated %}
                     <div class="border-t border-gray-200 pb-3 pt-4">
                         <div class="flex items-center px-4">

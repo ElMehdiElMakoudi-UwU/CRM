@@ -6,6 +6,13 @@ from .models import POSReceipt, POSLineItem
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 from django.shortcuts import render
+from django.db.models import Sum, Count, F, ExpressionWrapper, DecimalField, Value, Subquery, OuterRef
+from django.db.models.functions import Coalesce, Cast
+from datetime import datetime, time
+from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def pos_main_view(request):
@@ -134,3 +141,83 @@ def receipt_print_view(request, receipt_id):
         'change': change,
     }
     return render(request, 'pos/receipt_print.html', context)
+
+@login_required
+def daily_recap_view(request):
+    # Payment method display names mapping
+    PAYMENT_METHODS = {
+        'cash': 'Espèces',
+        'card': 'Carte',
+        'credit': 'Crédit'
+    }
+    
+    # Get today's date range
+    today = timezone.now().date()
+    today_start = timezone.make_aware(datetime.combine(today, time.min))
+    today_end = timezone.make_aware(datetime.combine(today, time.max))
+    
+    # Get all receipts for today
+    receipts = POSReceipt.objects.filter(created_at__range=(today_start, today_end))
+    
+    # Calculate total sales and transaction count
+    total_sales = receipts.aggregate(
+        total=Coalesce(Sum('total'), Decimal('0'))
+    )['total']
+    
+    transaction_count = receipts.count()
+    average_sale = Decimal('0') if transaction_count == 0 else total_sales / transaction_count
+    
+    # Get payment method statistics
+    payment_methods = []
+    for method_stats in receipts.values('payment_method').annotate(
+        count=Count('id'),
+        total=Sum('total')
+    ).order_by('-total'):
+        method_stats['method'] = PAYMENT_METHODS.get(method_stats['payment_method'], method_stats['payment_method'])
+        payment_methods.append(method_stats)
+    
+    # Debug: Check if we have any receipts
+    logger.debug(f"Found {receipts.count()} receipts for today")
+    
+    # Get all line items first to check
+    all_line_items = POSLineItem.objects.filter(receipt__in=receipts)
+    logger.debug(f"Found {all_line_items.count()} line items")
+    
+    # Get top selling products with raw aggregation
+    top_products_raw = POSLineItem.objects.filter(
+        receipt__in=receipts
+    ).values(
+        'product__name'
+    ).annotate(
+        name=F('product__name'),
+        quantity=Sum('quantity')
+    ).values(
+        'name',
+        'quantity'
+    ).order_by('-quantity')[:10]
+    
+    # Convert to list and calculate totals
+    top_products = []
+    for product in top_products_raw:
+        # Get all line items for this product
+        product_items = all_line_items.filter(product__name=product['name'])
+        total = sum(item.quantity * item.unit_price for item in product_items)
+        top_products.append({
+            'name': product['name'],
+            'quantity': product['quantity'],
+            'total': total
+        })
+    
+    # Sort by total
+    top_products.sort(key=lambda x: x['total'], reverse=True)
+    
+    context = {
+        'date': today,
+        'total_sales': total_sales,
+        'transaction_count': transaction_count,
+        'average_sale': average_sale,
+        'payment_methods': payment_methods,
+        'top_products': top_products,
+    }
+    
+    return render(request, 'pos/daily_recap.html', context)

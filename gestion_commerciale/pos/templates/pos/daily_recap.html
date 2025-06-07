@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Récapitulatif Journalier</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    @media print {
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-8">
+  <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Récapitulatif des Ventes - {{ date }}</h1>
+        <div class="no-print space-x-2">
+          <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+            🖨 Imprimer
+          </button>
+          <a href="{% url 'pos:interface' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 inline-block">
+            ← Retour
+          </a>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-green-50 p-4 rounded-lg">
+          <h3 class="text-lg font-semibold text-green-700">Total des Ventes</h3>
+          <p class="text-2xl font-bold text-green-800">{{ total_sales|floatformat:2 }} MAD</p>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <h3 class="text-lg font-semibold text-blue-700">Nombre de Transactions</h3>
+          <p class="text-2xl font-bold text-blue-800">{{ transaction_count }}</p>
+        </div>
+        <div class="bg-purple-50 p-4 rounded-lg">
+          <h3 class="text-lg font-semibold text-purple-700">Moyenne par Transaction</h3>
+          <p class="text-2xl font-bold text-purple-800">{{ average_sale|floatformat:2 }} MAD</p>
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4">Par Mode de Paiement</h2>
+        <div class="bg-white rounded-lg border overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Transactions</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {% for method in payment_methods %}
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap">{{ method.method }}</td>
+                <td class="px-6 py-4 text-right">{{ method.count }}</td>
+                <td class="px-6 py-4 text-right">{{ method.total|floatformat:2 }} MAD</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold mb-4">Produits les Plus Vendus</h2>
+        <div class="bg-white rounded-lg border overflow-hidden">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Quantité</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              {% for product in top_products %}
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap">{{ product.name }}</td>
+                <td class="px-6 py-4 text-right">{{ product.quantity }}</td>
+                <td class="px-6 py-4 text-right">{{ product.total|floatformat:2 }} MAD</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 
