@@ -26,14 +26,19 @@ class PricingService:
         ).filter(
             (Q(start_date__isnull=True) | Q(start_date__lte=today)) &
             (Q(end_date__isnull=True) | Q(end_date__gte=today))
-        ).order_by('-min_quantity')
+        )
 
-        # Prendre la règle la plus avantageuse (celle avec la quantité minimale la plus élevée)
-        if price_rules.exists():
-            best_rule = price_rules.first()
-            return best_rule.get_final_price(product.selling_price)
+        # Trouver la règle qui donne le prix le plus avantageux
+        best_price = product.selling_price
+        best_rule = None
 
-        return product.selling_price
+        for rule in price_rules:
+            price = rule.get_final_price(product.selling_price)
+            if price < best_price:
+                best_price = price
+                best_rule = rule
+
+        return best_price if best_rule else product.selling_price
 
     @staticmethod
     def get_bulk_prices_for_client(client: Client, products: list[Product]) -> dict[int, Decimal]:

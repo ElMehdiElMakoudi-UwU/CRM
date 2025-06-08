@@ -4,6 +4,8 @@ from products.models import Product
 from clients.models import Client
 from inventory.models import StockMovement, Warehouse
 from comptabilite.services import ComptabiliteService
+from django.contrib.auth import get_user_model
+from decimal import Decimal
 
 def get_default_warehouse():
     return Warehouse.objects.filter(is_active=True).first()
@@ -52,6 +54,22 @@ class Sale(models.Model):
     def __str__(self):
         return f"Vente #{self.id} - {self.client or 'Client anonyme'}"
 
+    def get_remaining_amount(self):
+        """Calculate remaining amount to be paid"""
+        return self.total_amount - self.amount_paid
+
+    @property
+    def is_fully_paid(self):
+        """Check if sale is fully paid"""
+        return self.get_remaining_amount() <= 0
+
+    def update_payment_status(self):
+        """Update payment status based on payments"""
+        total_paid = self.payments.aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
+        self.amount_paid = total_paid
+        self.is_credit = total_paid < self.total_amount
+        self.save()
+
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
@@ -64,6 +82,14 @@ class SaleItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.pk:  # Only check on creation
+            # Check if there's enough stock
+            current_stock = self.product.current_stock
+            if current_stock < self.quantity:
+                raise ValueError(f"Stock insuffisant. Stock disponible: {current_stock}")
+        super().save(*args, **kwargs)
 
 class Payment(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='payments')
@@ -78,3 +104,7 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.amount} MAD le {self.date.date()}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.sale.update_payment_status()

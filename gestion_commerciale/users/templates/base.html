@@ -16,7 +16,7 @@
                 <div class="flex h-16 justify-between">
                     <div class="flex">
                         <div class="flex flex-shrink-0 items-center">
-                            <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">GC</a>
+                            <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">TajirPro</a>
                         </div>
                         <div class="hidden sm:ml-6 sm:flex sm:space-x-4 items-center">
                             {% if user.is_authenticated %}
@@ -75,6 +75,18 @@
                                         <div class="border-t border-gray-100"></div>
                                         <a href="{% url 'payments:client_debts_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dettes clients</a>
                                         <!-- <a href="{% url 'payments:client_payment_history' client_id=0 %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Historique paiements</a> -->
+                                    </div>
+                                </div>
+
+                                <!-- Pricing Dropdown -->
+                                <div class="relative">
+                                    <button type="button" class="inline-flex items-center border-b-2 {% if 'pricing' in request.resolver_match.namespace %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="pricing-menu-button" aria-expanded="false" data-dropdown-toggle="pricing-dropdown">
+                                        Tarification
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="hidden absolute z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="pricing-dropdown">
+                                        <a href="{% url 'pricing:price_grid_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Grilles tarifaires</a>
+                                        <a href="{% url 'pricing:price_grid_create' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nouvelle grille</a>
                                     </div>
                                 </div>
 
@@ -223,6 +235,18 @@
                                 <a href="{% url 'clients:segment_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Segments</a>
                                 <a href="{% url 'payments:client_debts_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Dettes clients</a>
                                 <a href="{% url 'payments:client_payment_history' client_id=0 %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Historique paiements</a>
+                            </div>
+                        </div>
+
+                        <!-- Pricing Section -->
+                        <div class="border-l-4 border-transparent">
+                            <button type="button" class="flex w-full items-center justify-between py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700" data-collapse-toggle="mobile-pricing-menu">
+                                <span>Tarification</span>
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div class="hidden space-y-1" id="mobile-pricing-menu">
+                                <a href="{% url 'pricing:price_grid_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Grilles tarifaires</a>
+                                <a href="{% url 'pricing:price_grid_create' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Nouvelle grille</a>
                             </div>
                         </div>
 
