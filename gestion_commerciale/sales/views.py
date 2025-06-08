@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Sum, Q
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, JsonResponse
 from django.template.loader import get_template, render_to_string
 from django.utils import timezone
 
@@ -26,6 +26,7 @@ from products.models import Product, Category
 from inventory.models import StockMovement
 from clients.models import Client
 from .services import UnifiedSalesService
+from pricing.services import PricingService
 
 def sale_list(request):
     sales = Sale.objects.select_related('client').order_by('-date')
@@ -102,6 +103,34 @@ from .forms import SaleForm, PaymentForm
 from django.utils import timezone
 
 @login_required
+def get_product_price(request):
+    """
+    Vue Ajax pour obtenir le prix d'un produit pour un client spécifique
+    """
+    if request.method == "GET":
+        product_id = request.GET.get('product_id')
+        client_id = request.GET.get('client_id')
+        quantity = int(request.GET.get('quantity', 1))
+
+        try:
+            product = Product.objects.get(id=product_id)
+            client = Client.objects.get(id=client_id)
+            
+            price = PricingService.get_price_for_client(client, product, quantity)
+            
+            return JsonResponse({
+                'success': True,
+                'price': str(price),
+                'product_name': product.name
+            })
+        except (Product.DoesNotExist, Client.DoesNotExist):
+            return JsonResponse({
+                'success': False,
+                'error': 'Produit ou client non trouvé'
+            })
+    return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
+
+@login_required
 @transaction.atomic
 def sale_create(request):
     if request.method == "POST":
@@ -112,22 +141,15 @@ def sale_create(request):
         quantities = request.POST.getlist('quantities[]')
         unit_prices = request.POST.getlist('unit_prices[]')
 
-        print("🔎 POST received")
-        print("Product IDs:", product_ids)
-        print("Quantities:", quantities)
-        print("Unit prices:", unit_prices)
-        print("Form valid?", form.is_valid())
-        print("Form errors:", form.errors)
-        print("Payment form valid?", payment_form.is_valid())
-        print("Payment form errors:", payment_form.errors)
-
         if form.is_valid() and payment_form.is_valid() and product_ids:
             client = form.cleaned_data['client']
+            warehouse = form.cleaned_data['warehouse']
             notes = form.cleaned_data['notes']
             amount_paid = payment_form.cleaned_data['amount']
 
             sale = Sale.objects.create(
                 client=client,
+                warehouse=warehouse,
                 user=request.user,
                 date=timezone.now(),
                 total_amount=0,  # temp, will override later
@@ -139,7 +161,9 @@ def sale_create(request):
             for i, product_id in enumerate(product_ids):
                 product = Product.objects.get(id=product_id)
                 quantity = Decimal(quantities[i])
-                unit_price = Decimal(unit_prices[i])
+                
+                # Utiliser le service de tarification pour obtenir le prix unitaire
+                unit_price = PricingService.get_price_for_client(client, product, int(quantity))
                 total = quantity * unit_price
                 total_sale += total
 
@@ -153,6 +177,7 @@ def sale_create(request):
                 # Update stock (sortie)
                 StockMovement.objects.create(
                     product=product,
+                    warehouse=warehouse,
                     movement_type='out',
                     quantity=quantity,
                     source=f"Vente #{sale.id}",
@@ -176,22 +201,23 @@ def sale_create(request):
                 client.balance += total_sale - amount_paid
                 client.save()
 
-            print("✅ Vente enregistrée avec succès")
-            messages.success(request, "Vente enregistrée avec succès.")
-            return redirect('sales:sale_list')
+            messages.success(request, 'Vente créée avec succès.')
+            return redirect('sale_detail', pk=sale.id)
         else:
-            print("❌ Formulaire invalide ou aucun produit sélectionné.")
-            messages.error(request, "Formulaire invalide ou aucun produit sélectionné.")
+            messages.error(request, 'Erreur lors de la création de la vente.')
     else:
         form = SaleForm()
         payment_form = PaymentForm()
 
-    context = {
+    categories = Category.objects.all()
+    products = Product.objects.filter(is_active=True)
+    
+    return render(request, 'sales/sale_form.html', {
         'form': form,
         'payment_form': payment_form,
-        'categories': Category.objects.all(),
-    }
-    return render(request, 'sales/sale_form.html', context)
+        'categories': categories,
+        'products': products,
+    })
 
 def monthly_sales(request):
     # Obtenir le mois et l'année depuis les paramètres ou utiliser le mois courant
@@ -242,6 +268,45 @@ def generate_monthly_invoices_pdf(request):
         as_attachment=True,
         filename=f'factures_{year}_{month}.pdf'
     )
+
+@login_required
+def search_products(request):
+    """
+    Vue Ajax pour rechercher des produits
+    """
+    query = request.GET.get('q', '')
+    category_id = request.GET.get('category')
+    warehouse_id = request.GET.get('warehouse')
+
+    products = Product.objects.all()
+
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | 
+            Q(reference__icontains=query)
+        )
+
+    if category_id:
+        products = products.filter(category_id=category_id)
+
+    if warehouse_id:
+        products = products.filter(warehouses=warehouse_id)
+
+    products = products.select_related('category', 'default_warehouse')[:50]
+
+    product_list = [{
+        'id': p.id,
+        'name': p.name,
+        'reference': p.reference,
+        'selling_price': str(p.selling_price),
+        'price_with_tax': str(p.price_with_tax),
+        'tax_rate': str(p.tax_rate),
+        'category_name': p.category.name if p.category else '',
+        'default_warehouse_id': p.default_warehouse.id if p.default_warehouse else None,
+        'default_warehouse_name': p.default_warehouse.name if p.default_warehouse else None,
+    } for p in products]
+
+    return JsonResponse({'products': product_list})
 
 
 

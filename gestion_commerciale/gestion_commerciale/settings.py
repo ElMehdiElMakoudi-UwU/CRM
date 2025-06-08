@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django_htmx',
     'mobile_pos',
     'comptabilite',
+    'pricing',
 ]
 
 MIDDLEWARE = [

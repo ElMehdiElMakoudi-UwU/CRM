@@ -133,39 +133,6 @@ def stock_movement_create_view(request):
             movement.user = request.user
             movement.date = timezone.now()
             movement.save()
-
-            # Mise à jour du stock
-            stock, created = Stock.objects.get_or_create(
-                product=movement.product,
-                warehouse=movement.warehouse,
-                defaults={'quantity': 0}
-            )
-            if movement.movement_type == 'in':
-                stock.quantity += movement.quantity
-            elif movement.movement_type == 'out':
-                stock.quantity -= movement.quantity
-            elif movement.movement_type == 'adjustment':
-                stock.quantity = movement.quantity
-            elif movement.movement_type == 'transfer':
-                # Sortie de from_warehouse
-                from_stock, _ = Stock.objects.get_or_create(
-                    product=movement.product,
-                    warehouse=movement.from_warehouse,
-                    defaults={'quantity': 0}
-                )
-                to_stock, _ = Stock.objects.get_or_create(
-                    product=movement.product,
-                    warehouse=movement.to_warehouse,
-                    defaults={'quantity': 0}
-                )
-                from_stock.quantity -= movement.quantity
-                to_stock.quantity += movement.quantity
-                from_stock.save()
-                to_stock.save()
-                messages.success(request, "Transfert entre dépôts enregistré.")
-                return redirect('stock_movement_list')
-
-            stock.save()
             messages.success(request, "Mouvement de stock enregistré.")
             return redirect('stock_movement_list')
     else:
@@ -219,28 +186,18 @@ def stock_transfer_view(request):
             transfer.movement_type = 'transfer'
             transfer.user = request.user
             transfer.date = timezone.now()
-            transfer.save()
-
-            from_stock, _ = Stock.objects.get_or_create(
+            
+            # Vérifier si le stock est suffisant avant le transfert
+            from_stock = Stock.objects.filter(
                 product=transfer.product,
-                warehouse=transfer.from_warehouse,
-                defaults={'quantity': 0}
-            )
-            to_stock, _ = Stock.objects.get_or_create(
-                product=transfer.product,
-                warehouse=transfer.to_warehouse,
-                defaults={'quantity': 0}
-            )
-
-            if from_stock.quantity < transfer.quantity:
-                messages.error(request, f"Stock insuffisant dans {from_stock.warehouse.name}.")
+                warehouse=transfer.from_warehouse
+            ).first()
+            
+            if not from_stock or from_stock.quantity < transfer.quantity:
+                messages.error(request, f"Stock insuffisant dans {transfer.from_warehouse.name}.")
                 return redirect('inventory:stock_transfer')
-
-            from_stock.quantity -= transfer.quantity
-            to_stock.quantity += transfer.quantity
-            from_stock.save()
-            to_stock.save()
-
+                
+            transfer.save()
             messages.success(request, "Transfert effectué avec succès.")
             return redirect('inventory:stock_movement_list')
     else:

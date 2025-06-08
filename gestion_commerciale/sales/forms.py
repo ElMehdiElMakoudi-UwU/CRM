@@ -1,11 +1,24 @@
 from django import forms
 from .models import Sale, SaleItem, Payment
 from django.forms.models import inlineformset_factory
+from clients.models import Client
+from inventory.models import Warehouse
 
 class SaleForm(forms.ModelForm):
+    client = forms.ModelChoiceField(
+        queryset=Client.objects.all(),
+        required=False,
+        empty_label="Client anonyme"
+    )
+    warehouse = forms.ModelChoiceField(
+        queryset=Warehouse.objects.filter(is_active=True),
+        required=True,
+        label="Entrepôt source"
+    )
+    
     class Meta:
         model = Sale
-        fields = ['client', 'notes']
+        fields = ['client', 'warehouse', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3, 'class': 'w-full'}),
         }

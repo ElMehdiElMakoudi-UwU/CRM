@@ -1,26 +1,28 @@
 {% extends "base.html" %}
+{% load static %}
 {% load widget_tweaks %}
-{% block content %}
-<div class="p-6 max-w-6xl mx-auto space-y-8">
-  <h1 class="text-3xl font-bold text-gray-800">🧾 Nouvelle vente</h1>
 
-  <form method="POST" id="sale-form" action="{% url 'sales:sale_create' %}" class="space-y-6">
+{% block content %}
+<div class="container mx-auto p-6 space-y-6">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6">📝 Nouvelle vente</h1>
+
+  <form method="post" class="space-y-6">
     {% csrf_token %}
 
-    <!-- Section: Client -->
+    <!-- Section: Client et Entrepôt -->
     <div class="bg-white p-6 rounded shadow-md">
-      <h2 class="text-xl font-semibold text-gray-700 mb-4">👤 Client</h2>
+      <h2 class="text-xl font-semibold text-gray-700 mb-4">👤 Informations générales</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          {{ form.client.label_tag }} 
+          {{ form.client.label_tag }}
           {{ form.client|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
         <div>
-          {{ form.is_credit.label_tag }} 
-          {{ form.is_credit|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
+          {{ form.warehouse.label_tag }}
+          {{ form.warehouse|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
         <div class="md:col-span-2">
-          {{ form.notes.label_tag }} 
+          {{ form.notes.label_tag }}
           {{ form.notes|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
       </div>
@@ -40,15 +42,25 @@
           <thead class="bg-gray-100 text-gray-700">
             <tr>
               <th class="p-2">Produit</th>
-              <th class="p-2 text-center w-24">Quantité</th>
-              <th class="p-2 text-center w-28">Prix unitaire</th>
-              <th class="p-2 text-center w-28">Total</th>
+              <th class="p-2 text-center w-20">Qté</th>
+              <th class="p-2 text-right w-32">Prix HT</th>
+              <th class="p-2 text-right w-32">Prix TTC</th>
+              <th class="p-2 text-right w-32">Total HT</th>
+              <th class="p-2 text-right w-32">Total TTC</th>
               <th class="p-2 w-12"></th>
             </tr>
           </thead>
           <tbody id="product-table-body" class="divide-y divide-gray-200">
             <!-- JavaScript rows -->
           </tbody>
+          <tfoot class="bg-gray-50 font-medium">
+            <tr>
+              <td colspan="4" class="p-2 text-right">Totaux:</td>
+              <td class="p-2 text-right" id="total-ht">0.00 DH</td>
+              <td class="p-2 text-right" id="total-ttc">0.00 DH</td>
+              <td></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
@@ -59,11 +71,18 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label class="block font-medium text-gray-700 mb-1">Montant total</label>
-          <input id="total-global" name="total_amount" readonly class="w-full bg-gray-100 text-right px-3 py-2 rounded">
+          <div class="space-y-1">
+            <div id="payment-total-ht" class="text-sm text-gray-600">Total HT: 0.00 DH</div>
+            <div id="payment-total-ttc" class="text-base font-medium">Total TTC: 0.00 DH</div>
+            <input id="total-global" name="total_amount" type="hidden">
+          </div>
         </div>
         <div>
           {{ payment_form.amount.label_tag }} 
-          {{ payment_form.amount|add_class:"w-full border-gray-300 rounded px-3 py-2 border text-right" }}
+          <div class="relative">
+            {{ payment_form.amount|add_class:"w-full border-gray-300 rounded px-3 py-2 border text-right pr-12" }}
+            <span class="absolute right-3 top-2 text-gray-500">DH</span>
+          </div>
         </div>
         <div>
           {{ payment_form.method.label_tag }} 
@@ -71,7 +90,10 @@
         </div>
         <div>
           <label class="block font-medium text-gray-700 mb-1">Montant restant</label>
-          <input id="montant-restant" readonly class="w-full bg-gray-100 text-right px-3 py-2 rounded">
+          <div class="relative">
+            <input id="montant-restant" readonly class="w-full bg-gray-100 text-right px-3 py-2 rounded pr-12">
+            <span class="absolute right-3 top-2 text-gray-500">DH</span>
+          </div>
         </div>
       </div>
     </div>
@@ -118,66 +140,91 @@ document.addEventListener('DOMContentLoaded', () => {
   const amountPaidInput = document.querySelector('input[name="amount"]');
   const categoryFilter = document.getElementById('product-category-filter');
   const searchInput = document.getElementById('product-search');
+  const warehouseSelect = document.getElementById('id_warehouse');
+  const clientSelect = document.getElementById('id_client');
 
   let selectedProducts = [];
 
-  openBtn.addEventListener('click', () => {
-    modal.classList.remove('hidden');
-    loadProducts();
-  });
-
-  closeBtn.addEventListener('click', () => {
-    modal.classList.add('hidden');
-  });
-
-  searchInput.addEventListener('input', loadProducts);
-  categoryFilter.addEventListener('change', loadProducts);
-
-  function loadProducts() {
-    const query = searchInput.value;
-    const categoryId = categoryFilter.value;
-    const url = `/products/search/?q=${query}&category=${categoryId}`;
-
-    fetch(url)
-      .then(res => res.json())
-      .then(data => {
-        productList.innerHTML = '';
-        data.forEach(product => {
-          const div = document.createElement('div');
-          div.className = "flex justify-between items-center border p-2 rounded hover:bg-gray-50";
-          div.innerHTML = `
-            <div>
-              <p class="font-semibold">${product.name}</p>
-              <p class="text-sm text-gray-500">${product.category || ''}</p>
-            </div>
-            <button class="bg-blue-600 text-white px-3 py-1 rounded" data-id="${product.id}" data-name="${product.name}" data-price="${product.selling_price}">
-              Ajouter
-            </button>
-          `;
-          div.querySelector('button').addEventListener('click', () => {
-            addProductToTable(product);
-            modal.classList.add('hidden');
-          });
-          productList.appendChild(div);
-        });
-      });
+  // Fonction pour obtenir le prix d'un produit pour un client
+  async function getProductPrice(productId, clientId, quantity) {
+    try {
+      const response = await fetch(`/sales/get_product_price/?product_id=${productId}&client_id=${clientId}&quantity=${quantity}`);
+      const data = await response.json();
+      if (data.success) {
+        return data.price;
+      }
+      console.error('Erreur lors de la récupération du prix:', data.error);
+      return null;
+    } catch (error) {
+      console.error('Erreur lors de la requête:', error);
+      return null;
+    }
   }
 
   function addProductToTable(product) {
     if (selectedProducts.includes(product.id)) return;
     selectedProducts.push(product.id);
 
+    // Sélectionner automatiquement l'entrepôt par défaut du produit
+    if (product.default_warehouse_id) {
+      warehouseSelect.value = product.default_warehouse_id;
+    }
+
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td class="p-2">${product.name}<input type="hidden" name="products[]" value="${product.id}"></td>
-      <td class="p-2"><input type="number" name="quantities[]" value="1" min="1" class="w-20 border rounded px-1 py-0.5 text-right"></td>
-      <td class="p-2"><input type="number" name="unit_prices[]" value="${product.selling_price}" class="w-24 border rounded px-1 py-0.5 text-right"></td>
-      <td class="p-2 total-cell text-right">${product.selling_price}</td>
-      <td class="p-2"><button type="button" class="text-red-600 remove-row">&#10005;</button></td>
+      <td class="p-2">
+        ${product.name}
+        <input type="hidden" name="products[]" value="${product.id}">
+        ${product.default_warehouse_name ? 
+          `<br><span class="text-xs text-blue-600">Dépôt par défaut: ${product.default_warehouse_name}</span>` : 
+          ''}
+      </td>
+      <td class="p-2">
+        <input type="number" 
+               name="quantities[]" 
+               value="1" 
+               min="1" 
+               class="w-16 border rounded px-1 py-0.5 text-right quantity-input">
+      </td>
+      <td class="p-2 text-right">
+        <input type="number" 
+               name="unit_prices[]" 
+               readonly 
+               value="${Number(product.selling_price).toFixed(2)}" 
+               class="w-24 border rounded px-1 py-0.5 text-right bg-gray-100">
+      </td>
+      <td class="p-2 text-right">
+        <input type="number" 
+               name="unit_prices_ttc[]" 
+               readonly 
+               value="${Number(product.price_with_tax).toFixed(2)}" 
+               class="w-24 border rounded px-1 py-0.5 text-right bg-gray-100">
+      </td>
+      <td class="p-2 text-right total-cell-ht">0.00 DH</td>
+      <td class="p-2 text-right total-cell-ttc">0.00 DH</td>
+      <td class="p-2 text-center">
+        <button type="button" class="text-red-600 hover:text-red-800 remove-row">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </td>
     `;
 
-    row.querySelectorAll('input').forEach(input => {
-      input.addEventListener('input', () => updateRowTotal(row));
+    const quantityInput = row.querySelector('.quantity-input');
+    quantityInput.addEventListener('input', async () => {
+      const quantity = parseInt(quantityInput.value) || 1;
+      const clientId = clientSelect.value;
+      if (clientId) {
+        const newPrice = await getProductPrice(product.id, clientId, quantity);
+        if (newPrice !== null) {
+          const priceHT = parseFloat(newPrice);
+          const priceTTC = Math.round((priceHT * (1 + parseFloat(product.tax_rate) / 100)) * 100) / 100;
+          row.querySelector('input[name="unit_prices[]"]').value = priceHT.toFixed(2);
+          row.querySelector('input[name="unit_prices_ttc[]"]').value = priceTTC.toFixed(2);
+          updateRowTotal(row);
+        }
+      }
     });
 
     row.querySelector('.remove-row').addEventListener('click', () => {
@@ -187,29 +234,126 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     tableBody.appendChild(row);
+    updateRowTotal(row);
     updateTotals();
   }
 
   function updateRowTotal(row) {
     const qty = parseFloat(row.querySelector('input[name="quantities[]"]').value) || 0;
-    const price = parseFloat(row.querySelector('input[name="unit_prices[]"]').value) || 0;
-    row.querySelector('.total-cell').textContent = (qty * price).toFixed(2);
+    const priceHT = parseFloat(row.querySelector('input[name="unit_prices[]"]').value) || 0;
+    const priceTTC = parseFloat(row.querySelector('input[name="unit_prices_ttc[]"]').value) || 0;
+    
+    const totalHT = Math.round(qty * priceHT * 100) / 100;
+    const totalTTC = Math.round(qty * priceTTC * 100) / 100;
+    
+    row.querySelector('.total-cell-ht').textContent = `${totalHT.toFixed(2)} DH`;
+    row.querySelector('.total-cell-ttc').textContent = `${totalTTC.toFixed(2)} DH`;
     updateTotals();
   }
 
   function updateTotals() {
-    let total = 0;
-    tableBody.querySelectorAll('tr').forEach(row => {
-      total += parseFloat(row.querySelector('.total-cell').textContent) || 0;
+    let totalHT = 0;
+    let totalTTC = 0;
+    document.querySelectorAll('input[name="unit_prices[]"]').forEach((input, index) => {
+      const qty = parseFloat(document.querySelectorAll('input[name="quantities[]"]')[index].value) || 0;
+      const priceHT = parseFloat(input.value) || 0;
+      const priceTTC = parseFloat(document.querySelectorAll('input[name="unit_prices_ttc[]"]')[index].value) || 0;
+      totalHT += Math.round(qty * priceHT * 100) / 100;
+      totalTTC += Math.round(qty * priceTTC * 100) / 100;
     });
-    totalGlobal.value = total.toFixed(2);
-    const paid = parseFloat(amountPaidInput.value) || 0;
-    montantRestant.value = (total - paid).toFixed(2);
+
+    document.getElementById('total-ht').textContent = `${totalHT.toFixed(2)} DH`;
+    document.getElementById('total-ttc').textContent = `${totalTTC.toFixed(2)} DH`;
+    document.getElementById('payment-total-ht').textContent = `Total HT: ${totalHT.toFixed(2)} DH`;
+    document.getElementById('payment-total-ttc').textContent = `Total TTC: ${totalTTC.toFixed(2)} DH`;
+    totalGlobal.value = totalTTC.toFixed(2);
+
+    const amountPaid = parseFloat(amountPaidInput.value) || 0;
+    montantRestant.value = (Math.round((totalTTC - amountPaid) * 100) / 100).toFixed(2);
   }
 
-  if (amountPaidInput) {
-    amountPaidInput.addEventListener('input', updateTotals);
+  // Mettre à jour les prix quand le client change
+  clientSelect.addEventListener('change', async () => {
+    const clientId = clientSelect.value;
+    if (clientId) {
+      const rows = tableBody.querySelectorAll('tr');
+      for (const row of rows) {
+        const productId = row.querySelector('input[name="products[]"]').value;
+        const quantity = parseInt(row.querySelector('input[name="quantities[]"]').value) || 1;
+        const newPrice = await getProductPrice(productId, clientId, quantity);
+        if (newPrice !== null) {
+          row.querySelector('input[name="unit_prices[]"]').value = newPrice;
+          updateRowTotal(row);
+        }
+      }
+    }
+  });
+
+  // Mettre à jour le montant restant quand le montant payé change
+  amountPaidInput.addEventListener('input', updateTotals);
+
+  // Fonction pour charger les produits
+  async function loadProducts() {
+    const query = searchInput.value;
+    const category = categoryFilter.value;
+    const warehouse = warehouseSelect.value;
+
+    try {
+      const response = await fetch(`/sales/search_products/?q=${encodeURIComponent(query)}&category=${category}&warehouse=${warehouse}`);
+      const data = await response.json();
+      
+      productList.innerHTML = data.products.map(product => `
+        <div class="p-2 hover:bg-gray-100 cursor-pointer product-item" data-product='${JSON.stringify(product)}'>
+          <div class="font-medium">${product.name}</div>
+          <div class="text-sm text-gray-600">
+            ${product.reference ? `Réf: ${product.reference}` : ''}
+            ${product.category_name ? ` | ${product.category_name}` : ''}
+          </div>
+          <div class="text-sm">
+            <span class="text-gray-600">Prix HT: ${Number(product.selling_price).toFixed(2)} DH</span>
+            <span class="mx-2">|</span>
+            <span class="text-blue-600 font-medium">Prix TTC: ${Number(product.price_with_tax).toFixed(2)} DH</span>
+            ${product.tax_rate > 0 ? `<span class="text-xs text-gray-500">(TVA: ${product.tax_rate}%)</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+      // Ajouter les événements de clic
+      document.querySelectorAll('.product-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const product = JSON.parse(item.dataset.product);
+          addProductToTable(product);
+          modal.classList.add('hidden');
+        });
+      });
+    } catch (error) {
+      console.error('Erreur lors du chargement des produits:', error);
+      productList.innerHTML = '<div class="p-2 text-red-600">Erreur lors du chargement des produits</div>';
+    }
   }
+
+  // Événements pour la recherche et le filtrage
+  searchInput.addEventListener('input', loadProducts);
+  categoryFilter.addEventListener('change', loadProducts);
+  warehouseSelect.addEventListener('change', loadProducts);
+
+  // Événements pour le modal
+  openBtn.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    loadProducts();  // Charger les produits à l'ouverture
+  });
+
+  closeBtn.addEventListener('click', () => {
+    modal.classList.remove('flex');
+    modal.classList.add('hidden');
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
 });
 </script>
 {% endblock %}

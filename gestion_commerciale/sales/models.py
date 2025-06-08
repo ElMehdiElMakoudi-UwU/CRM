@@ -2,12 +2,22 @@ from django.db import models
 from django.conf import settings
 from products.models import Product
 from clients.models import Client
-from inventory.models import StockMovement
+from inventory.models import StockMovement, Warehouse
 from comptabilite.services import ComptabiliteService
+
+def get_default_warehouse():
+    return Warehouse.objects.filter(is_active=True).first()
 
 class Sale(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
+    warehouse = models.ForeignKey(
+        Warehouse, 
+        on_delete=models.PROTECT, 
+        related_name='sales',
+        null=True,  # Temporairement nullable
+        blank=True  # Temporairement optional
+    )
     date = models.DateTimeField(auto_now_add=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -21,6 +31,10 @@ class Sale(models.Model):
     def save(self, *args, **kwargs):
         # Détection automatique du crédit
         self.is_credit = self.amount_paid < self.total_amount
+        
+        # Si pas d'entrepôt spécifié, utiliser le premier entrepôt actif
+        if not self.warehouse:
+            self.warehouse = Warehouse.objects.filter(is_active=True).first()
         
         # Sauvegarde de la vente
         super().save(*args, **kwargs)

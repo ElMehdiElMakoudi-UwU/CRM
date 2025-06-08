@@ -88,7 +88,7 @@ def search_products(request):
     query = request.GET.get('q', '').strip()
     category_id = request.GET.get('category')
 
-    products = Product.objects.all()
+    products = Product.objects.select_related('category', 'default_warehouse').all()
 
     if query:
         products = products.filter(name__icontains=query)
@@ -103,6 +103,8 @@ def search_products(request):
             'name': product.name,
             'selling_price': float(product.selling_price),
             'category': product.category.name if product.category else '',
+            'default_warehouse_id': product.default_warehouse.id if product.default_warehouse else None,
+            'default_warehouse_name': product.default_warehouse.name if product.default_warehouse else None,
         })
 
     return JsonResponse(results, safe=False)
