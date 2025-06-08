@@ -34,6 +34,7 @@
                                     <div class="hidden absolute z-10 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="sales-dropdown">
                                         <a href="{% url 'sales:sale_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des ventes</a>
                                         <a href="{% url 'sales:sale_create' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nouvelle vente</a>
+                                        <a href="{% url 'sales:monthly_sales' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Ventes mensuelles</a>
                                         <div class="border-t border-gray-100"></div>
                                         <a href="{% url 'pos:interface' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">POS Interface</a>
                                         <a href="{% url 'pos:daily_recap' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Récapitulatif journalier</a>
@@ -87,6 +88,9 @@
                                         <a href="{% url 'suppliers:supplier_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des fournisseurs</a>
                                         <div class="border-t border-gray-100"></div>
                                         <a href="{% url 'purchases:purchase_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Liste des achats</a>
+                                        <a href="{% url 'purchases:purchase_create' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nouvel achat</a>
+                                        <div class="border-t border-gray-100"></div>
+                                        <a href="{% url 'purchases:monthly_purchases' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Achats mensuels</a>
                                     </div>
                                 </div>
 
@@ -182,6 +186,7 @@
                             <div class="hidden space-y-1" id="mobile-sales-menu">
                                 <a href="{% url 'sales:sale_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des ventes</a>
                                 <a href="{% url 'sales:sale_create' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Nouvelle vente</a>
+                                <a href="{% url 'sales:monthly_sales' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Ventes mensuelles</a>
                                 <a href="{% url 'pos:interface' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">POS Interface</a>
                                 <a href="{% url 'pos:daily_recap' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Récapitulatif journalier</a>
                                 <a href="{% url 'mobile_pos:dashboard' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Mobile POS</a>
@@ -230,6 +235,8 @@
                             <div class="hidden space-y-1" id="mobile-suppliers-menu">
                                 <a href="{% url 'suppliers:supplier_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des fournisseurs</a>
                                 <a href="{% url 'purchases:purchase_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Liste des achats</a>
+                                <a href="{% url 'purchases:purchase_create' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Nouvel achat</a>
+                                <a href="{% url 'purchases:monthly_purchases' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Achats mensuels</a>
                             </div>
                         </div>
 

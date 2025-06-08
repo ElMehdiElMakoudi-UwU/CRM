@@ -18,4 +18,5 @@ urlpatterns = [
     path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category-delete'),
     path('search/', views.search_products, name='product_search'),
 
+    path('import/', views.import_products_csv, name='import_products'),
 ]

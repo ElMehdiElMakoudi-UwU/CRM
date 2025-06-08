@@ -27,6 +27,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour le développement
+DEFAULT_FROM_EMAIL = 'noreply@example.com'
+EMAIL_SUBJECT_PREFIX = '[CRM] '
 
 # Application definition
 

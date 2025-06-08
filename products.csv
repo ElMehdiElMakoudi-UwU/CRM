@@ -1,0 +1,77 @@
+﻿name,arabic_name,reference,description,purchase_price,selling_price,tax_rate,brand,unit,category,supplier,is_active
+Mozzarela Top Chef Bloc 1 KG,موتزاريلا توب شيف بلوك 1 كيلو,MZTCB1K,,39.17,42.50,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozzarela Top Chef Rapée 1 KG,موتزاريلا توب شيف محكوك 1 كيلو,MZTCR1K,,39.17,42.50,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozzarela Top Chef Rapée Noire 1 KG,موتزاريلا توب شيف محكوك NOIR 1 كيلو,MZTCRN1K,,41.67,46.25,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozzarela Top Chef Bloc 200 Gr,موتزاريلا توب شيف BLOC 200 g,MZTCB200G,,8.33,9.17,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozzarela Top Chef Rapée 250 Gr,موتزاريلا توب شيف محكوك 250 كرام,MZTCR250G,,0,11.46,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Edam Top Chef Bloc 1 KG,ايدام توب شيف بلوك 1 كيلو,ETCB1K,,42.5,45.83,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Edam Top Chef Rapée 1 KG,ايدام توب شيف محكوك 1 كيلو,ETCR1K,,0,45.83,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Impérial Boule Rouge 1.5 KG,كرة حمراء ايمبريال 1.5 كيلو,IBR15K,,82.5,90.00,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Impérial Boule Rouge 900 Gr,كرة حمراء ايمبريال 900 غرام,IBR900G,,0,54.17,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Impérial Boule Rouge 90 Gr,كرة حمراء ايمبريال 90 g,IBR90G,,0,6.25,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mami Zakia Rapée 1 KG,مامي زكية محكوك 1 كيلو,MZR1K,,45,48.33,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozarel Mozzarela Bloc 1 KG,موتزاريلا موتزاريلا بلوك 1 كيلو,MMB1K,,32.5,35.00,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozarel Mozzarela Bloc 200 Gr,موتزاريلا موتزاريلا بلوك200 كرام,MMB200G,,6.88,7.50,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozarel Mozzarela Rapée 200 Gr,موتزاريلا موتزاريلا رابي 200 كرام,MMR200G,,7.29,7.92,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Mozarel Mozzarela Bloc 90 Gr,موتزاريلا موتزاريلا بلوك 90 كرام,MMB90G,,3.54,3.88,20,Top Chef,unit,Fromages,Top Chef,TRUE
+Crone Bloc 2 KG 1er,بلوك تاج 1ER / 2KG,CB2K1,,0,108.33,20,Divers,unit,Fromages,Divers,TRUE
+Crone Bloc 1 KG 1er,بلوك تاج 1ER / 1KG,CB1K1,,0,54.17,20,Divers,unit,Fromages,Divers,TRUE
+Crone Bloc 2 KG 2éme,بلوك تاج 2KG/ 2ER,CB2K2,,0,73.33,20,Divers,unit,Fromages,Divers,TRUE
+Crone Bloc 1 KG 2éme,بلوك تاج KG 1/ 2ER,CB1K2,,0,45.83,20,Divers,unit,Fromages,Divers,TRUE
+Fromage Slices,فروماج سلايت,FS,,0,15.00,20,Divers,unit,Fromages,Divers,TRUE
+Fromage Triangle 96,فروماج توبو 96,FT96,,0,49.17,20,Divers,unit,Fromages,Divers,TRUE
+Cheezy 24,تشيزي 24,C24,,0,12.50,20,Divers,unit,Fromages,Divers,TRUE
+Fromage à tartiner Caravella Bleu P,جبن كرفيلا ازرق صغير,FATCBP,,0,20.00,20,Divers,unit,Fromages,Divers,TRUE
+Fromage à tartiner Caravella Vert P,جبن كرفيلا الخضر صغير,FATCVP,,0,20.83,20,Divers,unit,Fromages,Divers,TRUE
+Fromage à tartiner Caravella Bleu G,جبن كرفيلا ازرق كبير,FATCBG,,0,36.67,20,Divers,unit,Fromages,Divers,TRUE
+Fromage à tartiner Caravella Vert G,جبن كرفيلا اخضر كبير,FATCVG,,0,37.50,20,Divers,unit,Fromages,Divers,TRUE
+Foie au KG,كبدة,FKG,,0,66.67,20,Divers,unit,Divers,Divers,TRUE
+Kacher 1.6 KG,كاشير 1.6 كيلو,K16K,,0,25.83,20,Divers,unit,Divers,Divers,TRUE
+Kacher viande 500 Gr,كاشير 500كرام لحم,KV500G,,0,8.75,20,Divers,unit,Divers,Divers,TRUE
+Kacher Poulet 550 Gr,كاشير 550كرام دجاج,KP550G,,0,7.92,20,Divers,unit,Divers,Divers,TRUE
+Pain Tacos 30/18,خبز تاكوس بكية 30/18,PT3018,,0,158.33,20,Divers,unit,Divers,Yozi Food,TRUE
+Pain Tacos 25/6,خبز تاكوس بكية 25/6,PT256,,0,150.00,20,Divers,unit,Divers,Yozi Food,TRUE
+Ketchup 2 KG,كتشوب 2 KG,K2K,,14.17,16.67,20,Divers,unit,Sauces,Top Chef,TRUE
+Mayonnaise 2 KG,مايونيز 2 KG,M2K,,24.58,28.33,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Moutarde 2 KG,موتارد 2 كيلو,MO2K,,26.67,29.17,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Piquante 2 KG,بيكونط 2 كيلو,P2K,,17.5,18.75,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Bnina Ketchup,بنينا كتشوب,BK,,11.67,14.17,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Bnina Mayonnaise,بنينا مينيص,BM,,20.83,21.67,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Bnina Piquante,بنينا حار,BP,,14.17,16.67,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Pizza 5 KG,بيترا 5 KG,P5K,,38.33,41.67,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Bnina Algérienne,بنينا الجريان,BA,,0,23.33,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Sachet Ketchup,كتشوب ساشي,SK,,0,62.50,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Sachet Mayonnaise,مايونيز ساشي,SM,,0,75.00,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Sachets Moutarde,موطارد ساشي,SMO,,0,62.50,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Ketchup 440 Ml,كتشوب 440,K440M,,0,9.17,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Ketchup 240 Ml,كتشوب 240,K240M,,0,8.17,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Mayonnaise 440 Ml,مايونيص 440,M440M,,0,12.92,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Mayonnaise 240 Ml,مايونيص 240,M240M,,0,8.75,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Piquante 440 Ml,حار 440,P440M,,0,9.17,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Piquante 240 Ml,حار 240,P240M,,0,8.17,20,Top Chef,unit,Sauces,Top Chef,TRUE
+Sac Sandwich ,صاك مشمع,SS,,0,9.17,20,Divers,unit,Divers,Divers,TRUE
+Confiture,كوفيتير,C,,0,13.33,20,Divers,unit,Divers,Divers,TRUE
+Boite Pizza 24,بيترا 24,BP24,,0,45.83,20,Divers,unit,Divers,Divers,TRUE
+Boite Pizza 26,بيتزا 26,BP26,,0,52.50,20,Divers,unit,Divers,Divers,TRUE
+Boite Pizza 29,بيتزا29,BP29,,0,70.83,20,Divers,unit,Divers,Divers,TRUE
+Sac Sandwich GR,صاك مشمع كبير,SSGR,,0,23.33,20,Divers,unit,Divers,Divers,TRUE
+Porte Sauce 20,بورط صوص 20,PS20,,0,0.13,20,Divers,unit,Divers,Divers,TRUE
+Boite carré 500 Gr,طاسة مربعة 500 غرام,BC500G,,0,0.42,20,Divers,unit,Divers,Divers,TRUE
+Goblet 40,غوبلي 40,G40,,0,0.25,20,Divers,unit,Divers,Divers,TRUE
+Khlii régime 1 KG,خليع رخيم 1 كيلو,KR1K,,0,112.50,20,Divers,unit,Divers,Divers,TRUE
+Goblet Jus 140,كاس عصير 140,GJ140,,0,0.67,20,Divers,unit,Divers,Divers,TRUE
+Surimi,سوريمي,S,,0,37.50,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Langouste,لانكوسط,L,,0,120.83,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Burger poulet,برغر,BP,,0,51.67,20,Divers,unit,Divers,Divers,TRUE
+Croquette 1 KG,كروكيك1 كيلو,C1K,,0,53.33,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Cordon Blue,كوردن بلو,CB,,0,60.83,20,Divers,unit,Divers,Ali,TRUE
+Nuggetts,نوكيط,N,,0,51.67,20,Divers,unit,Divers,Ali,TRUE
+Crevettes GF,كمبا,CGF,,0,100.00,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Calamar 1 KG,كلامار 1 كيلو,C1K,,0,44.17,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Khlii normale 1 KG,خليع عادي 1 كغ,KN1K,,0,104.17,20,Divers,unit,Divers,Divers,TRUE
+"Khlii Normale 0,5 Kg",خليع عادي 0.5 كغ,KN05K,,0,54.17,20,Divers,unit,Divers,Divers,TRUE
+"Khlii Régime 0,5 Kg",خليع رجيم 0.5 كغ,KR05K,,0,58.33,20,Divers,unit,Divers,Divers,TRUE
+Croquette 250 Gr,كروكيط 250 غرام,C250G,,0,0.00,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Surimi 250 Gr,سوريمي 250 غرام,S250G,,0,0.00,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Calamar 2 Kg,كلامار 2 كغ,C2K,,0,0.00,20,Divers,unit,Produits de la Mer,Ali,TRUE
+Panga 1 Kg,بانغا 1 كغ,P1K,,0,0.00,20,Divers,unit,Produits de la Mer,Ali,TRUE

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Achats mensuels{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-sm rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <!-- En-tête -->
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-xl font-semibold text-gray-900">Achats mensuels</h1>
+                <p class="mt-2 text-sm text-gray-700">
+                    Liste des achats pour {{ current_month|date:"F Y" }}
+                </p>
+            </div>
+            <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-2">
+                <a href="{% url 'purchases:generate_monthly_invoices_pdf' %}?month={{ current_month }}&year={{ current_year }}" 
+                   class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Générer PDF
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="mt-4 sm:flex sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <form method="get" class="sm:flex sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <div>
+                    <label for="month" class="block text-sm font-medium text-gray-700">Mois</label>
+                    <select id="month" name="month" class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                        {% for month in months %}
+                        <option value="{{ month.number }}" {% if month.number == current_month %}selected{% endif %}>
+                            {{ month.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="year" class="block text-sm font-medium text-gray-700">Année</label>
+                    <select id="year" name="year" class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                        {% for year_option in years %}
+                        <option value="{{ year_option }}" {% if year_option == current_year %}selected{% endif %}>
+                            {{ year_option }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="sm:mt-6">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Résumé -->
+        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total des achats</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ totals.total_amount|default:"0"|floatformat:2 }} DH</dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total payé</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ totals.total_paid|default:"0"|floatformat:2 }} DH</dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Nombre d'achats</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ totals.count }}</dd>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des achats -->
+        <div class="mt-8 flex flex-col">
+            <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+                    <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Date</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Fournisseur</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Montant</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Payé</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Statut</th>
+                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                        <span class="sr-only">Actions</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 bg-white">
+                                {% for purchase in purchases %}
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                        {{ purchase.date|date:"d/m/Y" }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        {{ purchase.supplier.name }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        {{ purchase.total_amount|floatformat:2 }} DH
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        {{ purchase.amount_paid|floatformat:2 }} DH
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                        {% if purchase.amount_paid >= purchase.total_amount %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Payé
+                                        </span>
+                                        {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            En attente
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                        <a href="{% url 'purchases:purchase_detail' purchase.id %}" class="text-indigo-600 hover:text-indigo-900">
+                                            Détail
+                                        </a>
+                                        <a href="{% url 'purchases:purchase_order_pdf' purchase.id %}" target="_blank" class="ml-4 text-indigo-600 hover:text-indigo-900">
+                                            PDF
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-6 text-gray-500">Aucun achat pour ce mois.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

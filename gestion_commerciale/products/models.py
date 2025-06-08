@@ -19,6 +19,7 @@ class Product(models.Model):
     ]
 
     name = models.CharField(max_length=200)
+    arabic_name = models.CharField("Nom en arabe", max_length=200, blank=True, null=True)
     reference = models.CharField(max_length=100, unique=True)
     barcode = models.CharField("Code-barres", max_length=100, blank=True, null=True, unique=True)
     description = models.TextField(blank=True)

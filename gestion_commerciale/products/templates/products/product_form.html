@@ -18,6 +18,11 @@
       </div>
 
       <div>
+        <label for="id_arabic_name" class="block text-sm font-medium mb-1">الاسم بالعربية</label>
+        {{ form.arabic_name|add_class:"border border-gray-300 rounded w-full p-2" }}
+      </div>
+
+      <div>
         <label for="id_reference" class="block text-sm font-medium mb-1">Référence</label>
         {{ form.reference|add_class:"border border-gray-300 rounded w-full p-2" }}
       </div>

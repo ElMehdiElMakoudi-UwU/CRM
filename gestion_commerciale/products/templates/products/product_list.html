@@ -8,9 +8,15 @@
     <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 flex items-center gap-2">
       <i data-lucide="box" class="w-6 h-6 text-indigo-600"></i> Produits
     </h2>
-    <a href="{% url 'products:product-create' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 w-full sm:w-auto text-center">
-      + Ajouter un produit
-    </a>
+    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      <a href="{% url 'products:product-create' %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 w-full sm:w-auto text-center">
+        + Ajouter un produit
+      </a>
+      <a href="{% url 'products:import_products' %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 w-full sm:w-auto text-center flex items-center justify-center gap-2">
+        <i data-lucide="upload" class="w-4 h-4"></i>
+        Importer CSV
+      </a>
+    </div>
   </div>
 
   <!-- 🔍 Barre de recherche et filtre -->
@@ -62,6 +68,9 @@
               {% endif %}
             </div>
             
+            {% if product.arabic_name %}
+            <p class="text-sm text-gray-500 text-right" dir="rtl" lang="ar">{{ product.arabic_name }}</p>
+            {% endif %}
             <p class="text-sm text-gray-500">Réf: {{ product.reference }}</p>
             <p class="text-sm text-gray-500">{{ product.category }}</p>
             
@@ -93,6 +102,7 @@
           <tr>
             <th class="px-4 py-3 text-left">Image</th>
             <th class="px-4 py-3 text-left">Nom</th>
+            <th class="px-4 py-3 text-right">الاسم بالعربية</th>
             <th class="px-4 py-3 text-left">Réf.</th>
             <th class="px-4 py-3 text-left">Catégorie</th>
             <th class="px-4 py-3 text-left">Prix HT</th>
@@ -114,6 +124,7 @@
               {% endif %}
             </td>
             <td class="px-4 py-3 font-medium">{{ product.name }}</td>
+            <td class="px-4 py-3 text-right" dir="rtl" lang="ar">{{ product.arabic_name|default:"-" }}</td>
             <td class="px-4 py-3">{{ product.reference }}</td>
             <td class="px-4 py-3">{{ product.category }}</td>
             <td class="px-4 py-3">{{ product.selling_price|floatformat:2 }} MAD</td>

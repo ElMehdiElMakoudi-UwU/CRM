@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Importer des produits{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Importer des produits depuis un fichier CSV</h2>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            {{ form.csv_file.label_tag }}
+                            {{ form.csv_file }}
+                            {% if form.csv_file.help_text %}
+                            <small class="form-text text-muted">{{ form.csv_file.help_text }}</small>
+                            {% endif %}
+                            {% if form.csv_file.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.csv_file.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.encoding.label_tag }}
+                            {{ form.encoding }}
+                            {% if form.encoding.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.encoding.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h5>Format attendu du fichier CSV :</h5>
+                            <p>Le fichier CSV doit contenir les colonnes suivantes :</p>
+                            <ul>
+                                <li><strong>name</strong> : Nom du produit</li>
+                                <li><strong>arabic_name</strong> : Nom en arabe (optionnel)</li>
+                                <li><strong>reference</strong> : Référence unique du produit</li>
+                                <li><strong>description</strong> : Description du produit (optionnel)</li>
+                                <li><strong>purchase_price</strong> : Prix d'achat (format: 0.00)</li>
+                                <li><strong>selling_price</strong> : Prix de vente (format: 0.00)</li>
+                                <li><strong>tax_rate</strong> : Taux de TVA (format: 0.00)</li>
+                                <li><strong>brand</strong> : Marque (optionnel)</li>
+                                <li><strong>unit</strong> : Unité (unit, kg, l, box)</li>
+                                <li><strong>is_active</strong> : Statut (True/False)</li>
+                            </ul>
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Importer</button>
+                            <a href="{% url 'products:product-list' %}" class="btn btn-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

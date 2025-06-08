@@ -32,11 +32,14 @@ from django.shortcuts import render
 from django.db.models import Q, F
 from .models import Purchase
 from suppliers.models import Supplier
-from datetime import datetime
+from datetime import datetime, date
 from django.contrib.auth.decorators import login_required
 
 from inventory.models import Stock, Warehouse, StockMovement
 from django.db.models import F
+from calendar import monthrange
+from decimal import Decimal
+from django.db.models import Sum
 
 def purchase_list_view(request):
     purchases = Purchase.objects.select_related('supplier').all()
@@ -105,11 +108,17 @@ def purchase_create(request):
                 products_data = json.loads(products_json)
             except json.JSONDecodeError:
                 messages.error(request, "Erreur de format des produits.")
-                return render(request, "purchases/purchase_form.html", {"form": form})
+                return render(request, "purchases/purchase_form.html", {
+                    "form": form,
+                    "categories": Category.objects.all()
+                })
 
             if not products_data:
                 messages.error(request, "Veuillez ajouter au moins un produit.")
-                return render(request, "purchases/purchase_form.html", {"form": form})
+                return render(request, "purchases/purchase_form.html", {
+                    "form": form,
+                    "categories": Category.objects.all()
+                })
 
             purchase = form.save(commit=False)
             total = 0
@@ -120,7 +129,10 @@ def purchase_create(request):
                     product = Product.objects.get(id=entry["product_id"])
                 except Product.DoesNotExist:
                     messages.error(request, f"Produit introuvable (ID {entry['product_id']}).")
-                    return render(request, "purchases/purchase_form.html", {"form": form})
+                    return render(request, "purchases/purchase_form.html", {
+                        "form": form,
+                        "categories": Category.objects.all()
+                    })
 
                 quantity = int(entry["quantity"])
                 unit_price = float(entry["unit_price"])
@@ -152,7 +164,8 @@ def purchase_create(request):
         form = PurchaseForm()
 
     return render(request, "purchases/purchase_form.html", {
-        "form": form
+        "form": form,
+        "categories": Category.objects.all()
     })
 
 # Ajouter un paiement fournisseur
@@ -256,3 +269,88 @@ def receive_purchase(request, pk):
         return redirect("purchases:purchase_detail", pk=purchase.pk)
 
     return render(request, "purchases/receive_confirmation.html", {"purchase": purchase})
+
+@login_required
+def monthly_purchases(request):
+    # Obtenir le mois et l'année depuis les paramètres ou utiliser le mois courant
+    current_date = timezone.now().date()
+    year = int(request.GET.get('year', current_date.year))
+    month = int(request.GET.get('month', current_date.month))
+    
+    # Obtenir toutes les achats du mois
+    start_date = date(year, month, 1)
+    _, last_day = monthrange(year, month)
+    end_date = date(year, month, last_day)
+    
+    purchases = Purchase.objects.filter(
+        date__gte=start_date,
+        date__lte=end_date
+    ).select_related('supplier')
+    
+    # Calculer les totaux
+    totals = purchases.aggregate(
+        total_amount=Sum('total_amount'),
+        total_paid=Sum('amount_paid'),
+        count=models.Count('id')
+    )
+    
+    # Générer la liste des mois pour le filtre
+    months = []
+    for m in range(1, 13):
+        months.append({
+            'number': m,
+            'name': date(2000, m, 1).strftime('%B')
+        })
+    
+    # Générer la liste des années (de l'année -2 à l'année +1)
+    current_year = timezone.now().year
+    years = range(current_year - 2, current_year + 2)
+    
+    context = {
+        'purchases': purchases,
+        'totals': totals,
+        'current_month': month,
+        'current_year': year,
+        'months': months,
+        'years': years,
+    }
+    
+    return render(request, 'purchases/monthly_purchases.html', context)
+
+@login_required
+def generate_monthly_invoices_pdf(request):
+    # Obtenir le mois et l'année depuis les paramètres
+    year = int(request.GET.get('year', timezone.now().year))
+    month = int(request.GET.get('month', timezone.now().month))
+    
+    # Obtenir les informations de l'entreprise si disponibles
+    company = CompanySettings.objects.first()
+    
+    # Obtenir toutes les achats du mois
+    start_date = date(year, month, 1)
+    _, last_day = monthrange(year, month)
+    end_date = date(year, month, last_day)
+    
+    purchases = Purchase.objects.filter(
+        date__gte=start_date,
+        date__lte=end_date
+    ).select_related('supplier').prefetch_related('items', 'items__product')
+    
+    # Créer le PDF
+    template = get_template('purchases/monthly_invoices_pdf.html')
+    context = {
+        'purchases': purchases,
+        'company': company,
+        'month': start_date.strftime('%B %Y')
+    }
+    
+    html = template.render(context)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="factures_achats_{year}_{month}.pdf"'
+    
+    # Créer le PDF
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Une erreur est survenue lors de la génération du PDF.', status=500)
+    
+    return response

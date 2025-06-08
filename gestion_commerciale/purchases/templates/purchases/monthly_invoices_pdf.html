@@ -1,0 +1,122 @@
+{% load math_filters %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: sans-serif; font-size: 14px; color: #333; }
+    h1, h2, h3 { margin: 0; }
+    .header {
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+    .header img {
+      height: 60px;
+      margin-bottom: 10px;
+    }
+    .info-block {
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .right { text-align: right; }
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+  <!-- En-tête de la société -->
+  {% if company %}
+  <div class="header">
+    {% if company.logo %}
+      <img src="{{ company.logo.url }}" alt="Logo de l'entreprise">
+    {% endif %}
+    <h2 style="margin-bottom: 5px;">{{ company.name }}</h2>
+    {% if company.address %}
+      <div style="margin-bottom: 5px;">{{ company.address }}</div>
+    {% endif %}
+    {% if company.phone %}
+      <div style="margin-bottom: 5px;">Tel : {{ company.phone }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <h1 style="text-align: center; margin: 20px 0;">Factures d'achat - {{ month }}</h1>
+
+  {% for purchase in purchases %}
+    {% if not forloop.first %}
+    <div class="page-break"></div>
+    {% endif %}
+
+    <div class="info-block">
+      <h3>Facture d'achat</h3>
+      <p style="margin-bottom: 3px;"><strong>Référence :</strong> ACH-{{ purchase.id|stringformat:"05d" }}</p>
+      <p style="margin-bottom: 3px;"><strong>Date :</strong> {{ purchase.date|date:"d/m/Y" }}</p>
+      <p style="margin-bottom: 3px;"><strong>Fournisseur :</strong> {{ purchase.supplier.name }}</p>
+      {% if purchase.supplier.address %}
+      <p style="margin-bottom: 3px;"><strong>Adresse :</strong> {{ purchase.supplier.address }}</p>
+      {% endif %}
+      {% if purchase.supplier.phone %}
+      <p style="margin-bottom: 3px;"><strong>Téléphone :</strong> {{ purchase.supplier.phone }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Produits -->
+    <table>
+      <thead>
+        <tr>
+          <th>Produit</th>
+          <th>Quantité</th>
+          <th>Prix unitaire</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in purchase.items.all %}
+        <tr>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.unit_price|floatformat:2 }} DH</td>
+          <td>{{ item.total_price|floatformat:2 }} DH</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3" class="right"><strong>Total</strong></td>
+          <td><strong>{{ purchase.total_amount|floatformat:2 }} DH</strong></td>
+        </tr>
+        <tr>
+          <td colspan="3" class="right"><strong>Montant payé</strong></td>
+          <td><strong>{{ purchase.amount_paid|floatformat:2 }} DH</strong></td>
+        </tr>
+        <tr>
+          <td colspan="3" class="right"><strong>Reste à payer</strong></td>
+          <td><strong>{{ purchase.amount_due|floatformat:2 }} DH</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    {% if purchase.notes %}
+    <div class="info-block">
+      <h4>Notes :</h4>
+      <p>{{ purchase.notes }}</p>
+    </div>
+    {% endif %}
+  {% endfor %}
+</body>
+</html> 

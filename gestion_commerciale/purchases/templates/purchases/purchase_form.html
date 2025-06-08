@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('product-search');
   const hiddenInput = document.getElementById('products-data');
 
-  let selectedProducts = [];
+  let selectedProducts = new Map(); // Changed to Map to store id->name mapping
 
   openBtn.addEventListener('click', () => {
     modal.classList.remove('hidden');
@@ -129,14 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const id = parseInt(button.dataset.id);
     const name = button.dataset.name;
     const price = parseFloat(button.dataset.price);
-    addProductToTable(id, name, price);
-  };
-
-  window.addProductToTable = function(id, name, price) {
-    if (selectedProducts.includes(id)) return;
-    selectedProducts.push(id);
-
+    
+    if (selectedProducts.has(id)) return;
+    selectedProducts.set(id, name); // Store id->name mapping
+    
     const row = document.createElement('tr');
+    row.dataset.productId = id; // Store product ID in row
     row.innerHTML = `
       <td class="p-2">${name}</td>
       <td class="p-2"><input type="number" value="1" min="1" class="qty w-20 border rounded px-1 py-0.5 text-right"></td>
@@ -150,8 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     row.querySelector('.remove-row').addEventListener('click', () => {
+      selectedProducts.delete(id); // Remove from Map
       row.remove();
-      selectedProducts = selectedProducts.filter(pid => pid !== id);
       updateProductsData();
     });
 
@@ -169,11 +167,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateProductsData() {
     const data = [];
     tableBody.querySelectorAll('tr').forEach(row => {
-      const name = row.cells[0].textContent;
+      const productId = parseInt(row.dataset.productId);
       const qty = row.querySelector('.qty').value;
       const price = row.querySelector('.unit').value;
-      const productId = selectedProducts.find(id => name.includes('')); // placeholder fallback
-      data.push({ product_id: productId, quantity: qty, unit_price: price });
+      data.push({ 
+        product_id: productId, 
+        quantity: qty, 
+        unit_price: price 
+      });
     });
     hiddenInput.value = JSON.stringify(data);
   }
