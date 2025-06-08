@@ -3,6 +3,7 @@ from django.conf import settings
 from products.models import Product
 from clients.models import Client
 from inventory.models import StockMovement
+from comptabilite.services import ComptabiliteService
 
 class Sale(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
@@ -12,6 +13,7 @@ class Sale(models.Model):
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_credit = models.BooleanField(default=False, blank=True)
     notes = models.TextField(blank=True, null=True)
+    ecriture_generee = models.BooleanField(default=False)
     
     def get_balance_due(self):
         return self.total_amount - self.amount_paid
@@ -19,7 +21,19 @@ class Sale(models.Model):
     def save(self, *args, **kwargs):
         # Détection automatique du crédit
         self.is_credit = self.amount_paid < self.total_amount
+        
+        # Sauvegarde de la vente
         super().save(*args, **kwargs)
+        
+        # Génération de l'écriture comptable si pas encore générée
+        if not self.ecriture_generee and self.user:
+            try:
+                ComptabiliteService.generer_ecriture_vente(self, self.user)
+                self.ecriture_generee = True
+                self.save(update_fields=['ecriture_generee'])
+            except ValueError as e:
+                # Log l'erreur mais ne bloque pas la sauvegarde
+                print(f"Erreur lors de la génération de l'écriture comptable : {str(e)}")
 
     def __str__(self):
         return f"Vente #{self.id} - {self.client or 'Client anonyme'}"

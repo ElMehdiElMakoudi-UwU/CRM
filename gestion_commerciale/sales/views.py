@@ -1,14 +1,31 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.forms import modelformset_factory
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Sum, Q
+from django.http import HttpResponse, FileResponse
+from django.template.loader import get_template, render_to_string
+from django.utils import timezone
+
+from datetime import datetime, date
+from calendar import monthrange
+from decimal import Decimal
+import io
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from xhtml2pdf import pisa
+
 from .models import Sale, SaleItem, Payment
 from .forms import SaleForm, SaleItemFormSet, PaymentForm
-from inventory.models import Stock, StockMovement
+from products.models import Product, Category
+from inventory.models import StockMovement
 from clients.models import Client
-
-from django.db.models import Q
-from datetime import datetime
+from .services import UnifiedSalesService
 
 def sale_list(request):
     sales = Sale.objects.select_related('client').order_by('-date')
@@ -63,7 +80,7 @@ def sale_invoice_pdf(request, pk):
 
     html = template.render({
         "sale": sale,
-        "company": request.user.company if hasattr(request.user, 'company') else None  # optionnel
+        "company": request.user.company if hasattr(request.user, 'company') else None
     })
 
     response = HttpResponse(content_type="application/pdf")
@@ -82,20 +99,7 @@ from .models import Sale, SaleItem, Payment
 from inventory.models import StockMovement
 from clients.models import Client
 from .forms import SaleForm, PaymentForm
-from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db import transaction
-from products.models import Product, Category
-from .models import Sale, SaleItem, Payment
-from inventory.models import StockMovement
-from clients.models import Client
-from .forms import SaleForm, PaymentForm
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from decimal import Decimal
 
 @login_required
 @transaction.atomic
@@ -188,6 +192,56 @@ def sale_create(request):
         'categories': Category.objects.all(),
     }
     return render(request, 'sales/sale_form.html', context)
+
+def monthly_sales(request):
+    # Obtenir le mois et l'année depuis les paramètres ou utiliser le mois courant
+    current_date = timezone.now().date()
+    year = int(request.GET.get('year', current_date.year))
+    month = int(request.GET.get('month', current_date.month))
+    
+    # Utiliser le service unifié pour obtenir toutes les ventes
+    sales_data = UnifiedSalesService.get_monthly_sales(year, month)
+    
+    # Générer la liste des mois pour le filtre
+    months = []
+    for m in range(1, 13):
+        months.append({
+            'number': m,
+            'name': date(2000, m, 1).strftime('%B')
+        })
+    
+    # Générer la liste des années (de l'année -2 à l'année +1)
+    current_year = timezone.now().year
+    years = range(current_year - 2, current_year + 2)
+    
+    context = {
+        'sales': sales_data['sales'],
+        'totals': sales_data['totals'],
+        'current_month': month,
+        'current_year': year,
+        'months': months,
+        'years': years,
+    }
+    
+    return render(request, 'sales/monthly_sales.html', context)
+
+def generate_monthly_invoices_pdf(request):
+    # Obtenir le mois et l'année depuis les paramètres
+    year = int(request.GET.get('year', timezone.now().year))
+    month = int(request.GET.get('month', timezone.now().month))
+    
+    # Obtenir les informations de l'entreprise si disponibles
+    company = request.user.company if hasattr(request.user, 'company') else None
+    
+    # Générer le PDF avec le service unifié
+    buffer = UnifiedSalesService.generate_monthly_invoices_pdf(year, month, company)
+    
+    # Retourner le PDF
+    return FileResponse(
+        buffer,
+        as_attachment=True,
+        filename=f'factures_{year}_{month}.pdf'
+    )
 
 
 

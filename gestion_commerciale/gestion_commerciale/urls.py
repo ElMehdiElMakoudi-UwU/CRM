@@ -21,4 +21,5 @@ urlpatterns = [
     path("purchases/", include("purchases.urls")),
     path('dashboard/', include('dashboard.urls', namespace='dashboard')),
     path('mobile-pos/', include('mobile_pos.urls')),
+    path('comptabilite/', include('comptabilite.urls')),
 ]
