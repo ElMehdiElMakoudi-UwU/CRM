@@ -30,4 +30,5 @@ urlpatterns = [
     path('mobile-pos/', include('mobile_pos.urls')),
     path('comptabilite/', include('comptabilite.urls')),
     path('pricing/', include('pricing.urls')),
+    path('sellers/', include('sellers.urls')),
 ]

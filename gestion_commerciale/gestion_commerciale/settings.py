@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'mobile_pos',
     'comptabilite',
     'pricing',
+    'sellers',
 ]
 
 MIDDLEWARE = [
