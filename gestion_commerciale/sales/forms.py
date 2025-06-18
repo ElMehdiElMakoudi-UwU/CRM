@@ -10,15 +10,10 @@ class SaleForm(forms.ModelForm):
         required=False,
         empty_label="Client anonyme"
     )
-    warehouse = forms.ModelChoiceField(
-        queryset=Warehouse.objects.filter(is_active=True),
-        required=True,
-        label="Entrepôt source"
-    )
     
     class Meta:
         model = Sale
-        fields = ['client', 'warehouse', 'notes']
+        fields = ['client', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3, 'class': 'w-full'}),
         }

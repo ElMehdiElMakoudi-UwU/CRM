@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from products.models import Product
 from clients.models import Client
-from inventory.models import StockMovement, Warehouse
+from inventory.models import StockMovement, Warehouse, Stock
 from comptabilite.services import ComptabiliteService
 from django.contrib.auth import get_user_model
 from decimal import Decimal
@@ -70,6 +70,17 @@ class Sale(models.Model):
         self.is_credit = total_paid < self.total_amount
         self.save()
 
+    @property
+    def total_amount_ttc(self):
+        total = 0
+        for item in self.items.all():
+            total += float(item.unit_price) * float(1 + (item.product.tax_rate or 0) / 100) * float(item.quantity)
+        return round(total, 2)
+
+    @property
+    def balance_due_ttc(self):
+        return round(self.total_amount_ttc - float(self.amount_paid), 2)
+
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
@@ -85,10 +96,18 @@ class SaleItem(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:  # Only check on creation
-            # Check if there's enough stock
-            current_stock = self.product.current_stock
+            # Check if there's enough stock in the product's default warehouse
+            from inventory.models import Stock
+            if not self.product.default_warehouse:
+                raise ValueError("Le produit n'a pas d'entrepôt par défaut défini")
+                
+            stock = Stock.objects.filter(
+                product=self.product,
+                warehouse=self.product.default_warehouse
+            ).first()
+            current_stock = stock.quantity if stock else 0
             if current_stock < self.quantity:
-                raise ValueError(f"Stock insuffisant. Stock disponible: {current_stock}")
+                raise ValueError(f"Stock insuffisant dans l'entrepôt {self.product.default_warehouse.name}. Stock disponible: {current_stock}")
         super().save(*args, **kwargs)
 
 class Payment(models.Model):

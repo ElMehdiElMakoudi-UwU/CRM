@@ -13,10 +13,10 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
       <p><strong>Client :</strong> {{ sale.client|default:"-" }}</p>
       <p><strong>Date :</strong> {{ sale.date|date:"d/m/Y H:i" }}</p>
-      <p><strong>Total :</strong> {{ sale.total_amount|floatformat:2 }} MAD</p>
+      <p><strong>Total :</strong> {{ sale.total_amount_ttc|floatformat:2 }} MAD</p>
       <p><strong>Payé :</strong> {{ sale.amount_paid|floatformat:2 }} MAD</p>
-      <p class="{% if sale.get_balance_due > 0 %}text-red-600 font-semibold{% else %}text-green-600{% endif %}">
-        <strong>Reste dû :</strong> {{ sale.get_balance_due|floatformat:2 }} MAD
+      <p class="{% if sale.balance_due_ttc > 0 %}text-red-600 font-semibold{% else %}text-green-600{% endif %}">
+        <strong>Reste dû :</strong> {{ sale.balance_due_ttc|floatformat:2 }} MAD
       </p>
     </div>
   </div>
