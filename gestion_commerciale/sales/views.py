@@ -27,6 +27,7 @@ from inventory.models import StockMovement
 from clients.models import Client
 from .services import UnifiedSalesService
 from pricing.services import PricingService
+from inventory.models import Warehouse
 
 def sale_list(request):
     sales = Sale.objects.select_related('client').order_by('-date')
@@ -143,9 +144,9 @@ def sale_create(request):
 
         if form.is_valid() and payment_form.is_valid() and product_ids:
             client = form.cleaned_data['client']
-            warehouse = form.cleaned_data['warehouse']
             notes = form.cleaned_data['notes']
             amount_paid = payment_form.cleaned_data['amount']
+            warehouse = Warehouse.objects.filter(is_active=True).first()
 
             sale = Sale.objects.create(
                 client=client,
@@ -199,8 +200,8 @@ def sale_create(request):
             )
 
             # Update client balance if partial payment
-            if amount_paid < total_sale:
-                client.balance += total_sale - amount_paid
+            if amount_paid < sale.total_amount_ttc:
+                client.balance += Decimal(str(sale.total_amount_ttc)) - amount_paid
                 client.save()
 
             messages.success(request, 'Vente créée avec succès.')
@@ -278,7 +279,6 @@ def search_products(request):
     """
     query = request.GET.get('q', '')
     category_id = request.GET.get('category')
-    warehouse_id = request.GET.get('warehouse')
 
     products = Product.objects.all()
 
@@ -290,9 +290,6 @@ def search_products(request):
 
     if category_id:
         products = products.filter(category_id=category_id)
-
-    if warehouse_id:
-        products = products.filter(stock_entries__warehouse_id=warehouse_id)
 
     products = products.select_related('category', 'default_warehouse')[:50]
 
@@ -306,6 +303,7 @@ def search_products(request):
         'category_name': p.category.name if p.category else '',
         'default_warehouse_id': p.default_warehouse.id if p.default_warehouse else None,
         'default_warehouse_name': p.default_warehouse.name if p.default_warehouse else None,
+        'current_stock': p.total_stock,
     } for p in products]
 
     return JsonResponse({'products': product_list})

@@ -17,10 +17,6 @@
           {{ form.client.label_tag }}
           {{ form.client|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
         </div>
-        <div>
-          {{ form.warehouse.label_tag }}
-          {{ form.warehouse|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
-        </div>
         <div class="md:col-span-2">
           {{ form.notes.label_tag }}
           {{ form.notes|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
@@ -140,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const amountPaidInput = document.querySelector('input[name="amount"]');
   const categoryFilter = document.getElementById('product-category-filter');
   const searchInput = document.getElementById('product-search');
-  const warehouseSelect = document.getElementById('id_warehouse');
   const clientSelect = document.getElementById('id_client');
 
   let selectedProducts = [];
@@ -164,11 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function addProductToTable(product) {
     if (selectedProducts.includes(product.id)) return;
     selectedProducts.push(product.id);
-
-    // Sélectionner automatiquement l'entrepôt par défaut du produit
-    if (product.default_warehouse_id) {
-      warehouseSelect.value = product.default_warehouse_id;
-    }
 
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -296,10 +286,9 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadProducts() {
     const query = searchInput.value;
     const category = categoryFilter.value;
-    const warehouse = warehouseSelect.value;
 
     try {
-      const response = await fetch(`/sales/search_products/?q=${encodeURIComponent(query)}&category=${category}&warehouse=${warehouse}`);
+      const response = await fetch(`/sales/search_products/?q=${encodeURIComponent(query)}&category=${category}`);
       const data = await response.json();
       
       productList.innerHTML = data.products.map(product => `
@@ -314,6 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="mx-2">|</span>
             <span class="text-blue-600 font-medium">Prix TTC: ${Number(product.price_with_tax).toFixed(2)} DH</span>
             ${product.tax_rate > 0 ? `<span class="text-xs text-gray-500">(TVA: ${product.tax_rate}%)</span>` : ''}
+            <span class="mx-2">|</span>
+            <span class="text-${product.current_stock > 0 ? 'green' : 'red'}-600 font-medium">Stock: ${product.current_stock}</span>
           </div>
         </div>
       `).join('');
@@ -335,7 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Événements pour la recherche et le filtrage
   searchInput.addEventListener('input', loadProducts);
   categoryFilter.addEventListener('change', loadProducts);
-  warehouseSelect.addEventListener('change', loadProducts);
 
   // Événements pour le modal
   openBtn.addEventListener('click', () => {

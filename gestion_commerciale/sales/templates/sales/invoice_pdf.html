@@ -57,7 +57,7 @@
         <td>{{ item.product.name }}</td>
         <td>{{ item.quantity }}</td>
         <td>{{ item.unit_price|floatformat:2 }} DH</td>
-        <td>{{ sale.total_amount|sub:sale.amount_paid|floatformat:2 }} DH</td>
+        <td>{{ item.total_price|floatformat:2 }} DH</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -71,11 +71,11 @@
     </tr>
     <tr>
       <th style="text-align: left;">TVA (20%) :</th>
-      <td class="right">{{ sale.total_amount|mul:0.2|floatformat:2 }} DH</td>
+      <td class="right">{{ sale.total_amount_ttc|floatformat:2|add:"-"|add:sale.total_amount|floatformat:2 }} DH</td>
     </tr>
     <tr>
       <th style="text-align: left;">Total TTC :</th>
-      <td class="right">{{ sale.total_amount|mul:1.2|floatformat:2 }} DH</td>
+      <td class="right">{{ sale.total_amount_ttc|floatformat:2 }} DH</td>
     </tr>
     <tr>
       <th style="text-align: left;">Payé :</th>
@@ -83,7 +83,7 @@
     </tr>
     <tr>
       <th style="text-align: left;">Reste à payer :</th>
-      <td class="right">{{ sale.total_amount|floatformat:2|sub:sale.amount_paid|floatformat:2 }} DH</td>
+      <td class="right">{{ sale.balance_due_ttc|floatformat:2 }} DH</td>
     </tr>
   </table>
 

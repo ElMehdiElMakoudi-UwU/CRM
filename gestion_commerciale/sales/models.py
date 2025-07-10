@@ -70,6 +70,17 @@ class Sale(models.Model):
         self.is_credit = total_paid < self.total_amount
         self.save()
 
+    @property
+    def total_amount_ttc(self):
+        total = 0
+        for item in self.items.all():
+            total += float(item.unit_price) * float(1 + (item.product.tax_rate or 0) / 100) * float(item.quantity)
+        return round(total, 2)
+
+    @property
+    def balance_due_ttc(self):
+        return round(self.total_amount_ttc - float(self.amount_paid), 2)
+
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
@@ -90,7 +101,7 @@ class SaleItem(models.Model):
             stock = Stock.objects.filter(product=self.product, warehouse=warehouse).first()
             current_stock = stock.quantity if stock else 0
             if current_stock < self.quantity:
-                raise ValueError(f"Stock insuffisant. Stock disponible: {current_stock}")
+                raise ValueError(f"Stock insuffisant dans l'entrepôt {warehouse.name}. Stock disponible: {current_stock}")
         super().save(*args, **kwargs)
 
 class Payment(models.Model):

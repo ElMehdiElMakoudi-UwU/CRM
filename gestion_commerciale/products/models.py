@@ -70,3 +70,9 @@ class Product(models.Model):
     def current_stock(self, value):
         """This is a no-op setter to prevent AttributeError when Django tries to set the property."""
         pass  # We don't actually want to set anything here
+
+    @property
+    def total_stock(self):
+        from inventory.models import Stock
+        stock_qs = Stock.objects.filter(product=self)
+        return sum([s.quantity for s in stock_qs])
