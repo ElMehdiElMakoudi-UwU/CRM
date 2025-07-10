@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.shortcuts import get_object_or_404
-from products.models import Product
+from products.models import Product, Category
 from .models import POSReceipt, POSLineItem
 from django.contrib.auth.decorators import login_required
 from decimal import Decimal
@@ -11,6 +11,8 @@ from django.db.models.functions import Coalesce, Cast
 from datetime import datetime, time
 from django.utils import timezone
 import logging
+from django.db import transaction
+from inventory.models import Stock
 
 logger = logging.getLogger(__name__)
 
@@ -21,44 +23,62 @@ def pos_main_view(request):
 @require_GET
 @login_required
 def product_list_view(request):
-    products = Product.objects.all()
+    products = Product.objects.select_related('category').all()
     data = [
         {
             "id": p.id,
             "name": p.name,
             "price": float(p.selling_price),
-            "image_url": p.image.url if p.image else "/static/images/default-product.png"
+            "image_url": p.image.url if p.image else "/static/images/default-product.png",
+            "category": {
+                "id": p.category.id,
+                "name": p.category.name
+            } if p.category else None
         }
         for p in products
     ]
     return JsonResponse(data, safe=False)
-
 
 @require_GET
 @login_required
 def product_search_view(request):
     query = request.GET.get("q", "")
-    products = Product.objects.filter(name__icontains=query)[:10]
+    category_id = request.GET.get("category")
+    
+    products = Product.objects.select_related('category').filter(name__icontains=query)
+    
+    if category_id and category_id.isdigit():
+        products = products.filter(category_id=category_id)
+    
+    products = products[:10]
+    
     data = [
         {
             "id": p.id,
             "name": p.name,
             "price": float(p.selling_price),
-            "image_url": p.image.url if p.image else "/static/images/default-product.png"
+            "image_url": p.image.url if p.image else "/static/images/default-product.png",
+            "category": {
+                "id": p.category.id,
+                "name": p.category.name
+            } if p.category else None
         }
         for p in products
     ]
     return JsonResponse(data, safe=False)
 
-
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from decimal import Decimal
-from django.db import transaction
-from products.models import Product
-from inventory.models import Stock
-from .models import POSReceipt, POSLineItem
+@require_GET
+@login_required
+def category_list_view(request):
+    categories = Category.objects.all()
+    data = [
+        {
+            "id": c.id,
+            "name": c.name
+        }
+        for c in categories
+    ]
+    return JsonResponse(data, safe=False)
 
 @require_POST
 @login_required
@@ -78,43 +98,65 @@ def checkout_view(request):
 
     for item_str in items:
         try:
-            product_id, qty_str, unit_price_str = item_str.split(",")
+            # Split the item string into its components
+            parts = item_str.split(",")
+            if len(parts) != 3:
+                logger.error(f"Invalid item format: {item_str}")
+                continue
+                
+            product_id, qty_str, unit_price_str = parts
             qty = Decimal(qty_str)
             unit_price = Decimal(unit_price_str)
 
             product = Product.objects.get(id=int(product_id))
 
+            # Check if product has a default warehouse
+            if not product.default_warehouse:
+                # Create the line item without stock check
+                POSLineItem.objects.create(
+                    receipt=receipt,
+                    product=product,
+                    quantity=int(qty),
+                    unit_price=unit_price
+                )
+                continue
+
             # ✅ Récupération du stock lié au produit et à son entrepôt par défaut
-            stock_entry = Stock.objects.select_for_update().get(
-                product=product,
-                warehouse=product.default_warehouse
-            )
+            try:
+                stock_entry = Stock.objects.select_for_update().get(
+                    product=product,
+                    warehouse=product.default_warehouse
+                )
 
-            if stock_entry.quantity < qty:
-                return JsonResponse({
-                    "status": "error",
-                    "message": f"Stock insuffisant pour {product.name} (disponible : {stock_entry.quantity})"
-                })
+                if stock_entry.quantity < qty:
+                    return JsonResponse({
+                        "status": "error",
+                        "message": f"Stock insuffisant pour {product.name} (disponible : {stock_entry.quantity})"
+                    })
 
-            # 💾 Création de la ligne de vente
-            POSLineItem.objects.create(
-                receipt=receipt,
-                product=product,
-                quantity=int(qty),
-                unit_price=unit_price
-            )
+                # 💾 Création de la ligne de vente
+                POSLineItem.objects.create(
+                    receipt=receipt,
+                    product=product,
+                    quantity=int(qty),
+                    unit_price=unit_price
+                )
 
-            # 📉 Décrémentation du stock
-            stock_entry.quantity -= qty
-            stock_entry.save()
+                # 📉 Décrémentation du stock
+                stock_entry.quantity -= qty
+                stock_entry.save()
 
-        except Stock.DoesNotExist:
-            return JsonResponse({
-                "status": "error",
-                "message": f"Aucun stock trouvé pour {product.name} dans l'entrepôt par défaut."
-            })
+            except Stock.DoesNotExist:
+                # If no stock entry exists, create the line item without stock check
+                POSLineItem.objects.create(
+                    receipt=receipt,
+                    product=product,
+                    quantity=int(qty),
+                    unit_price=unit_price
+                )
+
         except Exception as e:
-            print(f"Erreur produit {item_str} -> {e}")
+            logger.error(f"Erreur produit {item_str} -> {e}")
             continue
 
     return JsonResponse({"status": "ok", "receipt_id": receipt.id})
@@ -221,3 +263,21 @@ def daily_recap_view(request):
     }
     
     return render(request, 'pos/daily_recap.html', context)
+
+@require_POST
+@login_required
+def close_day_view(request):
+    today = timezone.now().date()
+    today_start = timezone.make_aware(datetime.combine(today, time.min))
+    today_end = timezone.make_aware(datetime.combine(today, time.max))
+    
+    # Get all receipts for today
+    receipts = POSReceipt.objects.filter(created_at__range=(today_start, today_end))
+    
+    # Mark all receipts as day_closed
+    receipts.update(day_closed=True)
+    
+    return JsonResponse({
+        "status": "ok",
+        "message": "Journée clôturée avec succès"
+    })

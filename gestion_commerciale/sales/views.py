@@ -162,16 +162,18 @@ def sale_create(request):
                 product = Product.objects.get(id=product_id)
                 quantity = Decimal(quantities[i])
                 
-                # Utiliser le service de tarification pour obtenir le prix unitaire
-                unit_price = PricingService.get_price_for_client(client, product, int(quantity))
-                total = quantity * unit_price
+                # Utiliser le service de tarification pour obtenir le prix unitaire HT
+                unit_price_ht = PricingService.get_price_for_client(client, product, int(quantity))
+                # Calculer le prix TTC
+                unit_price_ttc = unit_price_ht * (1 + product.tax_rate / 100)
+                total = quantity * unit_price_ttc
                 total_sale += total
 
                 SaleItem.objects.create(
                     sale=sale,
                     product=product,
                     quantity=quantity,
-                    unit_price=unit_price
+                    unit_price=unit_price_ttc  # Stocker le prix TTC
                 )
 
                 # Update stock (sortie)
@@ -202,7 +204,7 @@ def sale_create(request):
                 client.save()
 
             messages.success(request, 'Vente créée avec succès.')
-            return redirect('sale_detail', pk=sale.id)
+            return redirect('sales:sale_detail', pk=sale.id)
         else:
             messages.error(request, 'Erreur lors de la création de la vente.')
     else:
@@ -290,7 +292,7 @@ def search_products(request):
         products = products.filter(category_id=category_id)
 
     if warehouse_id:
-        products = products.filter(warehouses=warehouse_id)
+        products = products.filter(stock_entries__warehouse_id=warehouse_id)
 
     products = products.select_related('category', 'default_warehouse')[:50]
 

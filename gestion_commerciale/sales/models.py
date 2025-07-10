@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from products.models import Product
 from clients.models import Client
-from inventory.models import StockMovement, Warehouse
+from inventory.models import StockMovement, Warehouse, Stock
 from comptabilite.services import ComptabiliteService
 from django.contrib.auth import get_user_model
 from decimal import Decimal
@@ -85,8 +85,10 @@ class SaleItem(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:  # Only check on creation
-            # Check if there's enough stock
-            current_stock = self.product.current_stock
+            # Check stock in the sale's warehouse
+            warehouse = self.sale.warehouse
+            stock = Stock.objects.filter(product=self.product, warehouse=warehouse).first()
+            current_stock = stock.quantity if stock else 0
             if current_stock < self.quantity:
                 raise ValueError(f"Stock insuffisant. Stock disponible: {current_stock}")
         super().save(*args, **kwargs)

@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Récapitulatif Journalier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Récapitulatif des Ventes</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     @media print {
-      .no-print { display: none; }
+      .no-print {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -19,7 +22,10 @@
           <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
             🖨 Imprimer
           </button>
-          <a href="{% url 'pos:interface' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 inline-block">
+          <button onclick="confirmCloseDay()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+            ✅ Clôturer la Journée
+          </button>
+          <a href="{% url 'pos:pos_main' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 inline-block">
             ← Retour
           </a>
         </div>
@@ -41,46 +47,35 @@
       </div>
 
       <div class="mb-8">
-        <h2 class="text-xl font-semibold mb-4">Par Mode de Paiement</h2>
-        <div class="bg-white rounded-lg border overflow-hidden">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mode</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Transactions</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-              {% for method in payment_methods %}
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap">{{ method.method }}</td>
-                <td class="px-6 py-4 text-right">{{ method.count }}</td>
-                <td class="px-6 py-4 text-right">{{ method.total|floatformat:2 }} MAD</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <h2 class="text-xl font-bold mb-4">Méthodes de Paiement</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {% for method in payment_methods %}
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <h3 class="font-semibold">{{ method.method }}</h3>
+            <p class="text-lg">{{ method.count }} transactions</p>
+            <p class="text-xl font-bold">{{ method.total|floatformat:2 }} MAD</p>
+          </div>
+          {% endfor %}
         </div>
       </div>
 
       <div>
-        <h2 class="text-xl font-semibold mb-4">Produits les Plus Vendus</h2>
-        <div class="bg-white rounded-lg border overflow-hidden">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produit</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Quantité</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+        <h2 class="text-xl font-bold mb-4">Produits les Plus Vendus</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="px-4 py-2 text-left">Produit</th>
+                <th class="px-4 py-2 text-right">Quantité</th>
+                <th class="px-4 py-2 text-right">Total</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody>
               {% for product in top_products %}
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap">{{ product.name }}</td>
-                <td class="px-6 py-4 text-right">{{ product.quantity }}</td>
-                <td class="px-6 py-4 text-right">{{ product.total|floatformat:2 }} MAD</td>
+              <tr class="border-b">
+                <td class="px-4 py-2">{{ product.name }}</td>
+                <td class="px-4 py-2 text-right">{{ product.quantity }}</td>
+                <td class="px-4 py-2 text-right">{{ product.total|floatformat:2 }} MAD</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -89,5 +84,32 @@
       </div>
     </div>
   </div>
+
+  <script>
+    function confirmCloseDay() {
+      if (confirm('Êtes-vous sûr de vouloir clôturer la journée ? Cette action est irréversible.')) {
+        fetch('/pos/close-day/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'ok') {
+            alert('La journée a été clôturée avec succès !');
+            window.location.href = "{% url 'pos:pos_main' %}";
+          } else {
+            alert('Erreur lors de la clôture de la journée');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Erreur lors de la clôture de la journée');
+        });
+      }
+    }
+  </script>
 </body>
 </html> 
