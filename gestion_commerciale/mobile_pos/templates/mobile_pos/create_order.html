@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block extra_head %}
-<script src="{% static 'mobile_pos/js/offline-db.js' %}"></script>
 {% endblock %}
 
 {% block inner_title %}Nouvelle Commande{% endblock %}
@@ -162,6 +161,7 @@
 
 {% block extra_js %}
 {{ block.super }}
+<script src="{% static 'mobile_pos/js/offline-db.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('product_search');
@@ -338,7 +338,8 @@ document.addEventListener('DOMContentLoaded', function() {
             quickFilters.forEach(f => f.classList.remove('bg-blue-100', 'border-blue-500', 'text-blue-700'));
             this.classList.add('bg-blue-100', 'border-blue-500', 'text-blue-700');
             
-            // Filter products
+            // Filter products - get all product selects dynamically
+            const productSelects = document.querySelectorAll('.product-select');
             productSelects.forEach(select => {
                 Array.from(select.options).forEach(option => {
                     if (option.value === '') return; // Skip placeholder option
@@ -425,63 +426,86 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cache products for offline use
     fetch('{% url "mobile_pos:api_products" %}')
         .then(response => response.json())
-        .then(products => cacheProducts(products))
-        .catch(console.error);
+        .then(products => {
+            if (typeof cacheProducts === 'function') {
+                cacheProducts(products);
+            } else {
+                console.warn('cacheProducts function not available');
+            }
+        })
+        .catch(error => {
+            console.error('Error caching products:', error);
+        });
 
     // Handle form submission
     const form = document.getElementById('orderForm');
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const formData = new FormData(form);
-        const orderData = {
-            client_name: formData.get('client_name'),
-            items: Array.from(document.querySelectorAll('.product-select')).map(select => ({
-                product_id: select.value,
-                quantity: parseInt(select.closest('.bg-gray-50').querySelector('.quantity-input').value),
-                price: parseFloat(select.closest('.bg-gray-50').querySelector('.unit-price').textContent.replace(' MAD', ''))
-            })),
-            total_amount: parseFloat(document.getElementById('totalAmount').textContent)
-        };
+        // Check if we have at least one product selected
+        const productSelects = document.querySelectorAll('.product-select');
+        const hasProducts = Array.from(productSelects).some(select => select.value && select.value !== '');
+        
+        if (!hasProducts) {
+            alert('Veuillez sélectionner au moins un produit.');
+            return;
+        }
+
+        // Check if client name is provided
+        const clientName = document.getElementById('client_name').value.trim();
+        if (!clientName) {
+            alert('Veuillez saisir le nom du client.');
+            return;
+        }
 
         try {
             if (navigator.onLine) {
-                // Online submission
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
-                    },
-                    body: JSON.stringify(orderData)
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    window.location.href = result.redirect_url;
-                } else {
-                    throw new Error('Failed to submit order');
-                }
+                // Online submission - use regular form submission
+                form.submit();
             } else {
                 // Offline submission
-                await saveOrderForSync(orderData);
-                alert('Order saved for sync when online');
+                const orderData = {
+                    client_name: clientName,
+                    client_contact: document.getElementById('client_contact').value,
+                    notes: document.getElementById('notes').value,
+                    items: Array.from(productSelects).filter(select => select.value && select.value !== '').map(select => ({
+                        product_id: select.value,
+                        quantity: parseInt(select.closest('.bg-gray-50').querySelector('.quantity-input').value) || 1,
+                        price: parseFloat(select.closest('.bg-gray-50').querySelector('.unit-price').textContent.replace(' MAD', '')) || 0
+                    })),
+                    total_amount: parseFloat(document.getElementById('totalAmount').textContent) || 0
+                };
+                
+                if (typeof saveOrderForSync === 'function') {
+                    await saveOrderForSync(orderData);
+                    alert('Commande sauvegardée pour synchronisation en ligne.');
+                } else {
+                    alert('Fonction de sauvegarde hors ligne non disponible. Veuillez vous connecter à internet.');
+                }
                 form.reset();
                 document.getElementById('orderItems').innerHTML = '';
                 updateTotal();
+                // Add first item back
+                document.getElementById('addItem').click();
             }
         } catch (error) {
             console.error('Error submitting order:', error);
-            alert('Failed to submit order. Please try again.');
+            alert('Erreur lors de la soumission de la commande. Veuillez réessayer.');
         }
     });
 
     // Load products from cache if offline
     if (!navigator.onLine) {
-        getCachedProducts().then(products => {
-            productsList = products;
-            updateProductsList();
-        }).catch(console.error);
+        if (typeof getCachedProducts === 'function') {
+            getCachedProducts().then(products => {
+                // Update the products array with cached data
+                productsArray = products;
+            }).catch(error => {
+                console.error('Error loading cached products:', error);
+            });
+        } else {
+            console.warn('getCachedProducts function not available');
+        }
     }
 });
 </script>

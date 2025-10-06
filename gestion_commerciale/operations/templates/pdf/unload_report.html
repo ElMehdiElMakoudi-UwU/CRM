@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #880e4f; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #fce4ec; color: #4a148c; text-align: center; }
+        .total-row td { font-weight: bold; background-color: #f8bbd0; }
+        .total-amount { font-size: 1.2em; color: #b71c1c; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Rapport de Déchargement & Ventes</h1>
+        <p><strong>Vendeur:</strong> {{ seller.name }}</p>
+        <p><strong>Date:</strong> {{ date|date:"d F Y" }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th style="text-align: right;">Total Chargé</th>
+                <th style="text-align: right;">Retourné</th>
+                <th style="text-align: right;">Vendu (Vendu)</th>
+                <th style="text-align: right;">Prix Unitaire</th>
+                <th style="text-align: right;">Montant Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.product.name }}</td>
+                <td style="text-align: right;">{{ entry.total_loaded }}</td>
+                <td style="text-align: right;">{{ entry.retour }}</td>
+                <td style="text-align: right;">{{ entry.vendu }}</td>
+                <td style="text-align: right;">{{ entry.product.selling_price }}</td>
+                <td style="text-align: right;">{{ entry.amount|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="5" style="text-align: right;">TOTAL DES VENTES NETTES:</td>
+                <td style="text-align: right;" class="total-amount">{{ total_sales_amount|floatformat:2 }} $</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

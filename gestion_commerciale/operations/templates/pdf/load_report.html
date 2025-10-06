@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #1e3a8a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #e0f2f1; color: #004d40; text-align: center; }
+        .total-row td { font-weight: bold; background-color: #f0f4c3; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Bordereau de Chargement</h1>
+        <p><strong>Vendeur:</strong> {{ seller.name }}</p>
+        <p><strong>Date:</strong> {{ date|date:"d F Y" }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Produit</th>
+                <th style="text-align: right;">Voiture (Hier)</th>
+                <th style="text-align: right;">Sortie (Aujourd'hui)</th>
+                <th style="text-align: right;">Total Chargé</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry.product.name }}</td>
+                <td style="text-align: right;">{{ entry.voiture }}</td>
+                <td style="text-align: right;">{{ entry.sortie }}</td>
+                <td style="text-align: right;">{{ entry.total_loaded }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="3" style="text-align: right;">Total Produits:</td>
+                <td style="text-align: right;">{{ entries|length }}</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

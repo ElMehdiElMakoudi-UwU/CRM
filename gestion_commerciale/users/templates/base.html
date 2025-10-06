@@ -61,7 +61,19 @@
                                         <a href="{% url 'inventory:warehouse_list' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Entrepôts</a>
                                     </div>
                                 </div>
-
+                                
+                                <!-- Seller Operations Dropdown (NEW) -->
+                                <div class="relative">
+                                    <button type="button" class="inline-flex items-center border-b-2 {% if 'operations' in request.resolver_match.namespace %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="operations-menu-button" aria-expanded="false" data-dropdown-toggle="operations-dropdown">
+                                        Opérations Vendeur
+                                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div class="hidden absolute z-10 mt-2 w-56 rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5" id="operations-dropdown">
+                                        <a href="{% url 'operations:load_inventory' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chargement de l'Inventaire</a>
+                                        <a href="{% url 'operations:unload_inventory' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Déchargement de l'Inventaire</a>
+                                    </div>
+                                </div>
+                                
                                 <!-- Clients & Payments Dropdown -->
                                 <div class="relative">
                                     <button type="button" class="inline-flex items-center border-b-2 {% if 'clients' in request.resolver_match.namespace or 'payments' in request.resolver_match.namespace %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-3 py-4 text-sm font-medium" id="clients-menu-button" aria-expanded="false" data-dropdown-toggle="clients-dropdown">
@@ -220,6 +232,18 @@
                                 <a href="{% url 'inventory:stock_movement_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Mouvements</a>
                                 <a href="{% url 'inventory:stock_alerts' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Alertes stock</a>
                                 <a href="{% url 'inventory:warehouse_list' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Entrepôts</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Seller Operations Section (NEW) -->
+                        <div class="border-l-4 border-transparent">
+                            <button type="button" class="flex w-full items-center justify-between py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-700" data-collapse-toggle="mobile-operations-menu">
+                                <span>Opérations Vendeur</span>
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div class="hidden space-y-1" id="mobile-operations-menu">
+                                <a href="{% url 'operations:load_inventory' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Chargement de l'Inventaire</a>
+                                <a href="{% url 'operations:unload_inventory' %}" class="block py-2 pl-6 pr-4 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700">Déchargement de l'Inventaire</a>
                             </div>
                         </div>
 

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load operations_filters %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Retained for specific form styling */
+    input[type="number"] { width: 80px; text-align: right; }
+</style>
+
+<div class="max-w-4xl mx-auto bg-white rounded-lg card p-6 shadow-xl">
+    <h1 class="text-3xl font-extrabold mb-6 text-purple-700">📦 Déchargement de l'Inventaire</h1>
+
+    <!-- Seller/Date Selection Form -->
+    <form method="get" class="mb-8 border p-4 rounded-lg bg-purple-50 flex flex-wrap items-end gap-4">
+        <div>
+            <label for="seller-select" class="block text-sm font-medium text-gray-700">Sélectionner le Vendeur:</label>
+            <select id="seller-select" name="seller" class="mt-1 block w-64 rounded-md border-gray-300 shadow-sm p-2" required>
+                <option value="">-- Choisir --</option>
+                {% for s in sellers %}
+                    <option value="{{ s.id }}" {% if selected_seller.id|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="date-select" class="block text-sm font-medium text-gray-700">Date:</label>
+            <input type="date" id="date-select" name="date" value="{{ selected_date }}" class="mt-1 block w-40 rounded-md border-gray-300 shadow-sm p-2" required>
+        </div>
+        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+            Afficher
+        </button>
+    </form>
+
+    {% for message in messages %}
+        <div class="p-4 mb-4 text-sm {% if message.tags == 'error' %}text-red-700 bg-red-100{% else %}text-green-700 bg-green-100{% endif %} rounded-lg" role="alert">{{ message }}</div>
+    {% endfor %}
+
+    {% if selected_seller %}
+    <h2 class="text-2xl font-semibold mb-4 text-gray-800">Déchargement pour {{ selected_seller.name }} le {{ selected_date }}</h2>
+
+    <!-- Inventory Unloading Form -->
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" name="seller" value="{{ selected_seller.id }}">
+        <input type="hidden" name="date" value="{{ selected_date }}">
+
+        <div class="overflow-x-auto shadow-md rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-purple-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Voiture (Hier)</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Sortie (Aujourd'hui)</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Chargé</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Retour (Saisir)</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in entry_data %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.product.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ item.voiture }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{{ item.sortie }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700 text-right">{{ item.total_loaded }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                            <input type="number" name="retour_{{ item.product.id }}" value="{{ item.retour|default:'0' }}" min="0" 
+                                   max="{{ item.total_loaded }}"
+                                   class="border border-gray-300 p-2 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if entry_data %}
+            <button type="submit" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-md transition duration-300">
+                ✅ Enregistrer le Déchargement & Mettre à Jour le Stock
+            </button>
+        {% else %}
+            <p class="text-center text-red-500 font-semibold mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+                Aucun produit chargé pour {{ selected_seller.name }} à cette date. Veuillez d'abord enregistrer le chargement.
+            </p>
+        {% endif %}
+    </form>
+    {% elif seller_id %}
+        <p class="text-center text-red-500 font-semibold mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+            Veuillez sélectionner un vendeur et une date valides, ou il n'y a pas d'entrées de chargement pour ce jour.
+        </p>
+    {% endif %}
+</div>
+{% endblock content %}

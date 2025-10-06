@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'comptabilite',
     'pricing',
     'sellers',
+    'operations',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load operations_filters %}
+
+{% block title %}Chargement de l'Inventaire{% endblock %}
+
+{% block content %}
+    <div class="max-w-4xl mx-auto bg-white rounded-lg p-6 shadow-xl">
+        <h1 class="text-3xl font-extrabold mb-6 text-indigo-700">🛒 Chargement de l'Inventaire</h1>
+
+        <!-- Seller/Date Selection Form -->
+        <form method="get" class="mb-8 border p-4 rounded-xl bg-indigo-50 flex flex-wrap items-end gap-4">
+            <div>
+                <label for="seller-select" class="block text-sm font-medium text-gray-700">Sélectionner le Vendeur:</label>
+                <select id="seller-select" name="seller" class="mt-1 block w-64 rounded-md border-gray-300 shadow-sm p-2" required>
+                    <option value="">-- Choisir --</option>
+                    {% for seller in sellers %}
+                        <option value="{{ seller.id }}" {% if selected_seller_id|stringformat:"s" == seller.id|stringformat:"s" %}selected{% endif %}>{{ seller.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="date-select" class="block text-sm font-medium text-gray-700">Date:</label>
+                <input type="date" id="date-select" name="date" value="{{ selected_date }}" class="mt-1 block w-40 rounded-md border-gray-300 shadow-sm p-2" required>
+            </div>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-300 shadow-lg">
+                Afficher
+            </button>
+        </form>
+
+        {% if selected_seller %}
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800 border-b pb-2">Chargement pour {{ selected_seller.name }} le {{ selected_date }}</h2>
+
+        <!-- Inventory Loading Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <input type="hidden" name="seller" value="{{ selected_seller.id }}">
+            <input type="hidden" name="date" value="{{ selected_date }}">
+
+            <div class="overflow-x-auto shadow-md rounded-xl border">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-indigo-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Produit</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Voiture (Stock d'hier)</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Sortie (Chargement Aujourd'hui)</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Total Chargé</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for product in products %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ product.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">
+                                <span class="inline-block p-2 bg-yellow-100 rounded-lg font-mono">{{ voiture_quantities|get_item:product.id|default:0 }}</span>
+                                <input type="hidden" name="voiture_{{ product.id }}" value="{{ voiture_quantities|get_item:product.id|default:0 }}">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                                <input type="number" name="sortie_{{ product.id }}" value="0" min="0" class="border border-gray-300 p-2 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-right">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700 text-right">
+                                <!-- The total is computed in the view, but display logic helps the user -->
+                                <span class="text-indigo-600">{{ voiture_quantities|get_item:product.id|default:0 }}</span> + Sortie
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition duration-300 shadow-lg transform hover:scale-[1.005]">
+                💾 Enregistrer le Chargement & Générer PDF
+            </button>
+        </form>
+        {% elif selected_seller_id %}
+            <div class="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg mt-8">
+                <p class="text-center font-semibold">Le vendeur sélectionné n'existe pas ou la date est invalide.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

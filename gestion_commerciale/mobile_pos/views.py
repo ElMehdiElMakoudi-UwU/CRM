@@ -237,7 +237,7 @@ def serve_service_worker(request):
 @require_http_methods(["GET"])
 def api_products(request):
     products = Product.objects.all().values(
-        'id', 'name', 'price', 'category__name', 'stock'
+        'id', 'name', 'selling_price', 'category__name'
     )
     return JsonResponse(list(products), safe=False)
 

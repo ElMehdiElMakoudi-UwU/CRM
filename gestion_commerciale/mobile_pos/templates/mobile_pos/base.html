@@ -3,9 +3,10 @@
 
 {% block title %}{% block inner_title %}Mobile POS{% endblock %} - Gestion Commerciale{% endblock %}
 
-{# Add Service Worker Registration #}
+{# Override Tailwind CDN with local CSS for mobile POS #}
 {% block extra_head %}
-{{ block.super }}
+<link rel="stylesheet" href="{% static 'mobile_pos/css/mobile-pos.css' %}">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
 <style>
     /* Remove sidebar margin on desktop */
     @media (min-width: 768px) {
@@ -153,5 +154,6 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+<script src="{% static 'mobile_pos/js/mobile-pos.js' %}"></script>
 {% endblock %}
 {% endblock %} 
