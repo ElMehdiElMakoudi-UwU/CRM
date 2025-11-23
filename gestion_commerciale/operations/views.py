@@ -1,4 +1,5 @@
 # operations/views.py
+
 from datetime import datetime, timedelta
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,8 @@ from django.utils.timezone import now
 from django.urls import reverse
 from django.contrib import messages
 from django.db.models import F
+from django.db import transaction
+from decimal import Decimal
 
 # Third-party library for PDF generation (Requires: pip install xhtml2pdf)
 import xhtml2pdf.pisa as pisa
@@ -19,95 +22,129 @@ from products.models import Product
 # Import the Stock and StockMovement models from the 'inventory' app
 from inventory.models import Stock, StockMovement 
 
-# --- Inventory Loading View ---
+
+# --- Inventory Loading View (Chargement) ---
 @login_required
 def load_new_inventory(request):
     """
     Handles the loading (chargement) of inventory onto a seller's vehicle.
-    Calculates previous day's returns as today's starting 'voiture' stock.
-    Saves loading data and generates a PDF report.
+    Calculates carry-over stock ('voiture') based on the last recorded date 
+    and debits central stock upon load.
     """
     sellers = Seller.objects.all()
     products = Product.objects.all()
-    voiture_quantities = {} # Stores carried-over stock (voiture)
+    voiture_quantities = {} 
 
     selected_seller = None
     selected_seller_id = request.GET.get('seller') or request.POST.get('seller')
+    
+    # Get the selected date or default to today
     selected_date_str = request.GET.get('date') or request.POST.get('date')
-    selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date() if selected_date_str else now().date()
+    selected_date = now().date()
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            messages.error(request, "Format de date invalide.")
 
     if selected_seller_id:
-        try:
-            selected_seller = get_object_or_404(Seller, id=selected_seller_id)
-        except Seller.DoesNotExist:
-            messages.error(request, "Vendeur non trouvé.")
-            selected_seller_id = None 
+        selected_seller = get_object_or_404(Seller, id=selected_seller_id)
 
     if selected_seller:
-        # 1. Calculate 'voiture' (carry-over stock) from yesterday's returns
-        yesterday = selected_date - timedelta(days=1)
-        
-        # Fetch all previous entries in one query
-        yesterday_entries = SellerProductDayEntry.objects.filter(
-            seller=selected_seller, 
-            date=yesterday
-        ).select_related('product')
-        
-        # Map yesterday's 'retour' (return) to today's 'voiture'
-        for entry in yesterday_entries:
-            voiture_quantities[entry.product_id] = entry.retour
+        # --- PRE-LOAD: VOITURE CALCULATION (FIXED: Loop properly defined) ---
+        # Find the closing stock (retour) from the *last recorded activity*
+        for product in products: 
+            # Look up the last entry for this seller and product before the selected date.
+            last_entry = SellerProductDayEntry.objects.filter(
+                seller=selected_seller, 
+                product=product, 
+                date__lt=selected_date
+            ).order_by('-date').first()
+            
+            # Assign the 'retour' from that last entry as the current 'voiture'
+            voiture_quantities[product.id] = last_entry.retour if last_entry else Decimal('0.00')
 
+        # --- Handle POST Request (Saving the Load) ---
         if request.method == 'POST':
             entries = []
             
-            for product in products:
-                try:
-                    sortie_qty = int(request.POST.get(f'sortie_{product.id}', 0)) 
-                except ValueError:
-                    sortie_qty = 0
-                    
-                voiture_qty = voiture_quantities.get(product.id, 0)
+            try:
+                with transaction.atomic():
+                    for product in products:
+                        try:
+                            sortie_qty = Decimal(request.POST.get(f'sortie_{product.id}', 0)) 
+                        except ValueError:
+                            sortie_qty = Decimal('0.00')
+                            
+                        voiture_qty = voiture_quantities.get(product.id, Decimal('0.00'))
+                        
+                        if sortie_qty > 0 or voiture_qty > 0:
+                            
+                            # Create or update the day entry
+                            entry, created = SellerProductDayEntry.objects.update_or_create(
+                                seller=selected_seller,
+                                product=product,
+                                date=selected_date,
+                                defaults={
+                                    'voiture': voiture_qty,
+                                    'sortie': sortie_qty,
+                                    'retour': Decimal('0.00'), # Reset retour on load
+                                }
+                            )
+                            entries.append(entry)
 
-                if sortie_qty > 0 or voiture_qty > 0:
-                    
-                    entry, created = SellerProductDayEntry.objects.update_or_create(
-                        seller=selected_seller,
-                        product=product,
-                        date=selected_date,
-                        defaults={
-                            'voiture': voiture_qty,
-                            'sortie': sortie_qty,
-                            'retour': 0, # Reset return to 0 during loading
-                        }
-                    )
-                    
-                    entry.total_loaded = entry.voiture + entry.sortie
-                    entry.save()
-                    entries.append(entry)
-            
-            filtered_entries = [entry for entry in entries if entry.total_loaded > 0]
+                            # --- DEBIT CENTRAL STOCK ---
+                            if sortie_qty > 0:
+                                if hasattr(product, 'default_warehouse') and product.default_warehouse:
+                                    warehouse = product.default_warehouse
+                                    
+                                    # 1. Update Stock quantity (Deduct load)
+                                    Stock.objects.filter(
+                                        product=product,
+                                        warehouse=warehouse
+                                    ).update(
+                                        quantity=F('quantity') - sortie_qty
+                                    )
 
-            # Generate PDF Report
-            template = get_template('pdf/load_report.html')
-            html = template.render({
-                'seller': selected_seller,
-                'date': selected_date,
-                'entries': filtered_entries,
-            })
+                                    # 2. Log Stock Movement (Load/Out)
+                                    StockMovement.objects.create(
+                                        product=product,
+                                        warehouse=warehouse,
+                                        movement_type='load', 
+                                        quantity=sortie_qty,
+                                        source=f'chargement_vendeur: {selected_seller.name}',
+                                        user=request.user
+                                    )
+                                else:
+                                    print(f"WARNING: Cannot debit stock for {product.name}: No default warehouse.")
 
-            response = HttpResponse(content_type='application/pdf')
-            filename = f"Chargement-{selected_seller.name.replace(' ', '_')}-{selected_date}.pdf"
-            response['Content-Disposition'] = f'filename="{filename}"'
-            
-            pisa_status = pisa.CreatePDF(html, dest=response)
-            
-            if pisa_status.err:
-                messages.error(request, "Erreur lors de la génération du PDF de chargement.")
-                return redirect(reverse('operations:load_new_inventory')) 
-            
-            messages.success(request, f"Chargement enregistré pour {selected_seller.name}.")
-            return response
 
+                messages.success(request, f"Chargement enregistré pour {selected_seller.name}.")
+                
+                # Generate PDF Report
+                filtered_entries = [e for e in entries if (e.voiture + e.sortie) > 0]
+                template = get_template('pdf/load_report.html')
+                html = template.render({
+                    'seller': selected_seller,
+                    'date': selected_date,
+                    'entries': filtered_entries,
+                })
+
+                response = HttpResponse(content_type='application/pdf')
+                filename = f"Chargement-{selected_seller.name.replace(' ', '_')}-{selected_date}.pdf"
+                response['Content-Disposition'] = f'filename="{filename}"'
+                
+                pisa_status = pisa.CreatePDF(html, dest=response)
+                
+                if pisa_status.err:
+                    messages.error(request, "Erreur lors de la génération du PDF de chargement.")
+                    return redirect(reverse('operations:load_new_inventory')) 
+                
+                return response
+
+            except Exception as e:
+                messages.error(request, f"Erreur lors de l'enregistrement du chargement: {e}")
+                
     # Handle GET request or initial view display
     return render(request, 'operations/load_new_inventory.html', {
         'sellers': sellers,
@@ -116,149 +153,196 @@ def load_new_inventory(request):
         'selected_seller_id': selected_seller_id,
         'selected_date': selected_date.strftime('%Y-%m-%d'),
         'selected_seller': selected_seller,
-    })
+    })    
 
-# --- Inventory Unloading View ---
+
+# 📦 Inventory Unloading View (Déchargement)
+
 @login_required
 def unload_new_inventory(request):
     """
-    Handles the unloading (déchargement) of inventory, calculates sales, 
-    and updates the global Product stock via the Stock model, logging a 
-    StockMovement for the audit trail.
+    Handles the unloading (déchargement) of inventory, calculating sales, and updating 
+    global stock. Dynamically determines the most recent date needing reconciliation 
+    based on outstanding loaded quantities.
     """
     seller_id = request.GET.get("seller")
-    date_str = request.GET.get("date")
+    reconciliation_date_str = request.GET.get("date")
     
-    selected_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else now().date()
-
     seller = None
     entry_data = [] 
+    reconciliation_date = now().date()
 
     if seller_id:
-        try:
-            seller = get_object_or_404(Seller, id=seller_id)
-        except Seller.DoesNotExist:
-            messages.error(request, "Vendeur non trouvé.")
-            seller_id = None
+        seller = get_object_or_404(Seller, id=seller_id)
 
     if seller:
-        # Fetch today's entry data (voiture, sortie, and previous retour if any)
+        # --- 1. DETERMINE RECONCILIATION DATE ---
+        if not reconciliation_date_str:
+            # Find the date of the MOST RECENT entry the seller was active on.
+            latest_load_date = SellerProductDayEntry.objects.filter(
+                seller=seller,
+                date__lte=now().date()
+            ).order_by('-date').values_list('date', flat=True).first()
+            
+            if latest_load_date:
+                reconciliation_date = latest_load_date
+            else:
+                messages.error(request, f"Aucun historique de chargement trouvé pour {seller.name}. Impossible de décharger.")
+                reconciliation_date_str = reconciliation_date.strftime('%Y-%m-%d') # Fallback date string
+                
+                return render(request, "operations/unload_new_inventory.html", {
+                    "sellers": Seller.objects.all(),
+                    "selected_seller": seller,
+                    "selected_date": reconciliation_date_str,
+                    "entry_data": [], 
+                    "seller_id": seller_id,
+                })
+        else:
+            try:
+                reconciliation_date = datetime.strptime(reconciliation_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                messages.error(request, "Format de date invalide.")
+                
+        reconciliation_date_str = reconciliation_date.strftime('%Y-%m-%d')
+        
+        # --- 2. FETCH ENTRIES FOR RECONCILIATION ---
         today_entries = SellerProductDayEntry.objects.filter(
             seller=seller, 
-            date=selected_date
+            date=reconciliation_date
         ).select_related('product')
         
-        # Prepare data for display and POST processing
+        # 3. Filter data to only show items with REMAINING STOCK
         for entry in today_entries:
             entry.total_loaded = entry.voiture + entry.sortie
-            if entry.total_loaded > 0:
-                entry_data.append(entry)
-
+            
+            # Check if there is remaining stock to be reconciled (loaded > returned)
+            entry.remaining_stock = entry.total_loaded - entry.retour
+            
+            # Only display items that still need reconciliation
+            if entry.remaining_stock > Decimal('0.00'):
+                 entry_data.append(entry)
+        
+        if not entry_data and request.method == "GET":
+            messages.info(request, f"Le chargement du **{reconciliation_date_str}** semble déjà entièrement déchargé. Veuillez choisir une autre date si nécessaire.")
+            
+        # --- Handle POST Request (Reconciliation) ---
         if request.method == "POST":
-            if not entry_data:
-                messages.error(request, "Aucun chargement trouvé pour cette date. Impossible de décharger.")
-                return redirect(reverse('operations:unload_new_inventory') + f'?seller={seller_id}&date={selected_date.strftime("%Y-%m-%d")}')
+            # Re-fetch entries to ensure we use the current database state
+            entries_to_process = SellerProductDayEntry.objects.filter(
+                seller=seller, date=reconciliation_date
+            ).select_related('product')
 
-            for entry in entry_data:
-                product = entry.product
-                
-                try:
-                    retour_qty = int(request.POST.get(f"retour_{product.id}", 0))
-                except ValueError:
-                    retour_qty = 0
-                
-                total_loaded = entry.voiture + entry.sortie
-                
-                # Input validation: returns cannot exceed total loaded
-                if retour_qty > total_loaded:
-                    messages.warning(request, f"Avertissement: Le retour de {product.name} ({retour_qty}) a été plafonné au stock chargé ({total_loaded}).")
-                    retour_qty = total_loaded
-
-                # Calculate "before" sold quantity for stock difference check
-                previous_vendu = entry.vendu 
-
-                # Update the entry fields
-                entry.retour = retour_qty
-                entry.vendu = total_loaded - entry.retour
-                entry.amount = entry.vendu * product.selling_price
-                
-                entry.save() 
-                
-                # Calculate the difference in sales (The net change in stock consumption)
-                sold_difference = entry.vendu - previous_vendu
-                
-                # --- STOCK DEDUCTION LOGIC WITH MOVEMENT LOGGING ---
-                if sold_difference != 0:
-                    if product.default_warehouse:
-                        warehouse = product.default_warehouse
+            try:
+                with transaction.atomic():
+                    for entry in entries_to_process:
+                        product = entry.product
                         
-                        if sold_difference > 0:
-                            # 1. Update Stock quantity (Deduct sales)
-                            Stock.objects.filter(
-                                product=product,
-                                warehouse=warehouse
-                            ).update(
-                                quantity=F('quantity') - sold_difference
-                            )
-
-                            # 2. Log Stock Movement (Sale/Out)
-                            StockMovement.objects.create(
-                                product=product,
-                                warehouse=warehouse,
-                                movement_type='out',
-                                quantity=sold_difference,
-                                source=f'vente_vendeur: {seller.name}',
-                                user=request.user
-                            )
+                        try:
+                            # Use Decimal for input consistency
+                            retour_qty = Decimal(request.POST.get(f"retour_{product.id}", 0))
+                        except ValueError:
+                            retour_qty = Decimal('0.00')
                         
-                        elif sold_difference < 0:
-                            # If sold_difference is negative, stock needs to be restored (e.g., corrected return)
-                            restored_quantity = abs(sold_difference)
-                            
-                            # 1. Update Stock quantity (Restore stock)
-                            Stock.objects.filter(
-                                product=product,
-                                warehouse=warehouse
-                            ).update(
-                                quantity=F('quantity') + restored_quantity
-                            )
+                        total_loaded = entry.voiture + entry.sortie
+                        previous_retour = entry.retour
+                        
+                        # Input validation: returns cannot exceed total loaded
+                        if retour_qty > total_loaded:
+                            messages.warning(request, f"Avertissement: Le retour de {product.name} ({retour_qty}) a été plafonné au stock chargé ({total_loaded}).")
+                            retour_qty = total_loaded
 
-                            # 2. Log Stock Movement (Adjustment/Correction)
-                            StockMovement.objects.create(
-                                product=product,
-                                warehouse=warehouse,
-                                movement_type='adjustment', 
-                                quantity=restored_quantity,
-                                source=f'correction_dechargement: {seller.name}',
-                                user=request.user
-                            )
-                    else:
-                        messages.warning(request, f"Impossible de mettre à jour le stock global pour {product.name}: Aucun entrepôt par défaut trouvé.")
-                    
-            messages.success(request, f"Déchargement enregistré pour {seller.name} et stock global mis à jour.")
+                        # Calculate "before" sold quantity (Vendu before this submission)
+                        previous_vendu = total_loaded - previous_retour 
 
-            # Redirect to the PDF export view
-            pdf_url = reverse('operations:export_unload_pdf', args=[seller.id, selected_date])
-            return redirect(pdf_url)
+                        # Update the entry fields
+                        entry.retour = retour_qty
+                        entry.vendu = total_loaded - entry.retour
+                        entry.amount = entry.vendu * product.selling_price
+                        
+                        entry.save() 
+                        
+                        # Calculate the net change in stock consumption
+                        sold_difference = entry.vendu - previous_vendu
+                        
+                        # --- STOCK DEDUCTION LOGIC ---
+                        if sold_difference != 0:
+                            if hasattr(product, 'default_warehouse') and product.default_warehouse:
+                                warehouse = product.default_warehouse
+                                
+                                if sold_difference > 0:
+                                    # Sales increased -> Deduct more from Stock
+                                    Stock.objects.filter(
+                                        product=product,
+                                        warehouse=warehouse
+                                    ).update(
+                                        quantity=F('quantity') - sold_difference
+                                    )
 
+                                    StockMovement.objects.create(
+                                        product=product,
+                                        warehouse=warehouse,
+                                        movement_type='sale_out',
+                                        quantity=sold_difference,
+                                        source=f'vente_vendeur: {seller.name}',
+                                        user=request.user
+                                    )
+                                
+                                elif sold_difference < 0:
+                                    # Sales decreased (more returned) -> Restore stock
+                                    restored_quantity = abs(sold_difference)
+                                    
+                                    Stock.objects.filter(
+                                        product=product,
+                                        warehouse=warehouse
+                                    ).update(
+                                        quantity=F('quantity') + restored_quantity
+                                    )
+
+                                    StockMovement.objects.create(
+                                        product=product,
+                                        warehouse=warehouse,
+                                        movement_type='adjustment', 
+                                        quantity=restored_quantity,
+                                        source=f'correction_dechargement: {seller.name}',
+                                        user=request.user
+                                    )
+                            else:
+                                messages.warning(request, f"Impossible de mettre à jour le stock global pour {product.name}: Aucun entrepôt par défaut trouvé.")
+                        
+                messages.success(request, f"Déchargement enregistré pour {seller.name} (Date: {reconciliation_date_str}) et stock global mis à jour.")
+
+                # Redirect to the PDF export view
+                pdf_url = reverse('operations:export_unload_pdf', args=[seller.id, reconciliation_date_str])
+                return redirect(pdf_url)
+
+            except Exception as e:
+                messages.error(request, f"Erreur lors de la décharge: {e}")
+                
     # Handle GET request
     return render(request, "operations/unload_new_inventory.html", {
         "sellers": Seller.objects.all(),
         "selected_seller": seller,
-        "selected_date": selected_date.strftime('%Y-%m-%d'),
+        "selected_date": reconciliation_date_str,
         "entry_data": entry_data, 
         "seller_id": seller_id,
     })
 
 
-# --- PDF Export View for Unloading ---
+
+# 📄 PDF Export View for Unloading
+
 @login_required
 def export_unload_pdf(request, seller_id, date_str):
     """
     Generates a PDF report for the day's unloading operation (sales summary).
     """
     seller = get_object_or_404(Seller, id=seller_id)
-    selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.error(request, "Date de rapport invalide.")
+        return redirect(reverse('operations:unload_new_inventory')) 
 
     entries = SellerProductDayEntry.objects.filter(
         seller=seller, 

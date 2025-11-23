@@ -11,7 +11,6 @@
 <div class="max-w-4xl mx-auto bg-white rounded-lg card p-6 shadow-xl">
     <h1 class="text-3xl font-extrabold mb-6 text-purple-700">📦 Déchargement de l'Inventaire</h1>
 
-    <!-- Seller/Date Selection Form -->
     <form method="get" class="mb-8 border p-4 rounded-lg bg-purple-50 flex flex-wrap items-end gap-4">
         <div>
             <label for="seller-select" class="block text-sm font-medium text-gray-700">Sélectionner le Vendeur:</label>
@@ -23,8 +22,8 @@
             </select>
         </div>
         <div>
-            <label for="date-select" class="block text-sm font-medium text-gray-700">Date:</label>
-            <input type="date" id="date-select" name="date" value="{{ selected_date }}" class="mt-1 block w-40 rounded-md border-gray-300 shadow-sm p-2" required>
+            <label for="date-select" class="block text-sm font-medium text-gray-700">Date (Optionnel):</label>
+            <input type="date" id="date-select" name="date" value="{{ selected_date }}" class="mt-1 block w-40 rounded-md border-gray-300 shadow-sm p-2">
         </div>
         <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
             Afficher
@@ -38,7 +37,6 @@
     {% if selected_seller %}
     <h2 class="text-2xl font-semibold mb-4 text-gray-800">Déchargement pour {{ selected_seller.name }} le {{ selected_date }}</h2>
 
-    <!-- Inventory Unloading Form -->
     <form method="post" class="space-y-6">
         {% csrf_token %}
         <input type="hidden" name="seller" value="{{ selected_seller.id }}">
@@ -79,13 +77,13 @@
             </button>
         {% else %}
             <p class="text-center text-red-500 font-semibold mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-                Aucun produit chargé pour {{ selected_seller.name }} à cette date. Veuillez d'abord enregistrer le chargement.
+                Aucun produit à décharger pour cette date. Le chargement du **{{ selected_date }}** est peut-être déjà entièrement déchargé.
             </p>
         {% endif %}
     </form>
     {% elif seller_id %}
         <p class="text-center text-red-500 font-semibold mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-            Veuillez sélectionner un vendeur et une date valides, ou il n'y a pas d'entrées de chargement pour ce jour.
+            Veuillez sélectionner un vendeur.
         </p>
     {% endif %}
 </div>
