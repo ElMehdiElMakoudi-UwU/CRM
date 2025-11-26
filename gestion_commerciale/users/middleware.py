@@ -16,6 +16,7 @@ class RoleBasedRedirectMiddleware:
                 request.path.startswith('/admin/'),
                 request.path.startswith('/api/'),
                 request.path.startswith('/media/'),
+                request.path.startswith('/mobile-pos/'),  # Allow all mobile-pos URLs
                 'login' in current_url,
                 'logout' in current_url,
             ]):
@@ -28,6 +29,7 @@ class RoleBasedRedirectMiddleware:
             role_urls = {
                 'sales_rep': [
                     'mobile_pos',
+                    'dashboard',
                     'create_order',
                     'order_detail',
                     'order_list',
@@ -35,6 +37,19 @@ class RoleBasedRedirectMiddleware:
                     'offline',
                     'sync_order',
                     'sw.js',
+                    # Inventory management
+                    'mobile_inventory_status',
+                    'mobile_load_inventory',
+                    'inventory_request_list',
+                    'inventory_request_create',
+                    'inventory_request_detail',
+                    # Client management
+                    'client_list_mobile',
+                    'client_create_mobile',
+                    # Sales
+                    'sale_list_mobile',
+                    'sale_create_mobile',
+                    'sale_detail_mobile',
                 ],
                 'admin': ['*'],  # Admin can access everything
                 'manager': ['*'],  # Manager can access everything
@@ -52,9 +67,9 @@ class RoleBasedRedirectMiddleware:
 
             # If user is trying to access a non-allowed URL
             if '*' not in allowed_urls and current_url not in allowed_urls:
-                # Redirect sales reps to mobile POS
+                # Redirect sales reps to mobile POS dashboard
                 if user_role == 'sales_rep':
-                    return redirect('mobile_pos:create_order')
+                    return redirect('mobile_pos:dashboard')
                 # Add other role redirections here if needed
 
         return self.get_response(request) 

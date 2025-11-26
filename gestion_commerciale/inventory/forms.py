@@ -1,6 +1,16 @@
 from django import forms
 from .models import Stock, StockMovement, Warehouse
 
+class WarehouseForm(forms.ModelForm):
+    class Meta:
+        model = Warehouse
+        fields = ['name', 'location', 'is_active']
+        labels = {
+            'name': 'Nom',
+            'location': 'Lieu',
+            'is_active': 'Actif',
+        }
+
 class StockForm(forms.ModelForm):
     class Meta:
         model = Stock

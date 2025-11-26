@@ -32,6 +32,11 @@ class Sale(models.Model):
     
     def save(self, *args, **kwargs):
         # Détection automatique du crédit
+        # Handle None values for total_amount
+        if self.total_amount is None:
+            self.total_amount = Decimal('0')
+        if self.amount_paid is None:
+            self.amount_paid = Decimal('0')
         self.is_credit = self.amount_paid < self.total_amount
         
         # Si pas d'entrepôt spécifié, utiliser le premier entrepôt actif

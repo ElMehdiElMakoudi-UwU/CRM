@@ -51,17 +51,19 @@ def load_new_inventory(request):
         selected_seller = get_object_or_404(Seller, id=selected_seller_id)
 
     if selected_seller:
-        # --- PRE-LOAD: VOITURE CALCULATION (FIXED: Loop properly defined) ---
-        # Find the closing stock (retour) from the *last recorded activity*
+        # --- PRE-LOAD: VOITURE CALCULATION ---
+        # Calculate "Voiture" (Carry-Over Stock) from the last entry's retour
+        # Logic: The last entry's returned stock (retour) becomes today's carry-over stock (voiture)
+        # This handles gaps in work days (e.g., weekends) by finding the most recent entry
         for product in products: 
-            # Look up the last entry for this seller and product before the selected date.
+            # Look up the last entry for this seller and product before the selected date
             last_entry = SellerProductDayEntry.objects.filter(
                 seller=selected_seller, 
                 product=product, 
                 date__lt=selected_date
             ).order_by('-date').first()
             
-            # Assign the 'retour' from that last entry as the current 'voiture'
+            # The last entry's retour becomes today's voiture
             voiture_quantities[product.id] = last_entry.retour if last_entry else Decimal('0.00')
 
         # --- Handle POST Request (Saving the Load) ---
@@ -78,6 +80,9 @@ def load_new_inventory(request):
                             
                         voiture_qty = voiture_quantities.get(product.id, Decimal('0.00'))
                         
+                        # Calculate total_loaded = voiture + sortie
+                        total_loaded = voiture_qty + sortie_qty
+                        
                         if sortie_qty > 0 or voiture_qty > 0:
                             
                             # Create or update the day entry
@@ -88,7 +93,8 @@ def load_new_inventory(request):
                                 defaults={
                                     'voiture': voiture_qty,
                                     'sortie': sortie_qty,
-                                    'retour': Decimal('0.00'), # Reset retour on load
+                                    'total_loaded': total_loaded,  # Calculate and save total_loaded
+                                    'retour': Decimal('0.00'),  # Initialize retour to 0 at this stage
                                 }
                             )
                             entries.append(entry)
@@ -122,7 +128,8 @@ def load_new_inventory(request):
                 messages.success(request, f"Chargement enregistré pour {selected_seller.name}.")
                 
                 # Generate PDF Report
-                filtered_entries = [e for e in entries if (e.voiture + e.sortie) > 0]
+                # Filter entries where total_loaded > 0
+                filtered_entries = [e for e in entries if e.total_loaded > 0]
                 template = get_template('pdf/load_report.html')
                 html = template.render({
                     'seller': selected_seller,
@@ -211,9 +218,13 @@ def unload_new_inventory(request):
             date=reconciliation_date
         ).select_related('product')
         
-        # 3. Filter data to only show items with REMAINING STOCK
+        # 3. Prepare entry data for display
+        # The entry already contains "Voiture" (starting stock) and "Sortie" (loaded stock) from the load phase
         for entry in today_entries:
-            entry.total_loaded = entry.voiture + entry.sortie
+            # Ensure total_loaded is calculated (should already be saved from load phase)
+            if not entry.total_loaded:
+                entry.total_loaded = entry.voiture + entry.sortie
+                entry.save(update_fields=['total_loaded'])
             
             # Check if there is remaining stock to be reconciled (loaded > returned)
             entry.remaining_stock = entry.total_loaded - entry.retour
@@ -243,7 +254,8 @@ def unload_new_inventory(request):
                         except ValueError:
                             retour_qty = Decimal('0.00')
                         
-                        total_loaded = entry.voiture + entry.sortie
+                        # Get total_loaded (should already be calculated from load phase)
+                        total_loaded = entry.total_loaded if entry.total_loaded else (entry.voiture + entry.sortie)
                         previous_retour = entry.retour
                         
                         # Input validation: returns cannot exceed total loaded
@@ -254,23 +266,33 @@ def unload_new_inventory(request):
                         # Calculate "before" sold quantity (Vendu before this submission)
                         previous_vendu = total_loaded - previous_retour 
 
+                        # Recalculate Vendu (Sales) using the core reconciliation formula:
+                        # Vendu = (Voiture + Sortie) - Retour
+                        vendu = total_loaded - retour_qty
+                        
+                        # Calculate Amount: Vendu * Product Selling Price
+                        amount = vendu * product.selling_price
+
                         # Update the entry fields
                         entry.retour = retour_qty
-                        entry.vendu = total_loaded - entry.retour
-                        entry.amount = entry.vendu * product.selling_price
+                        entry.vendu = vendu
+                        entry.amount = amount
                         
                         entry.save() 
                         
-                        # Calculate the net change in stock consumption
+                        # Calculate the net change in stock consumption (sold_difference)
                         sold_difference = entry.vendu - previous_vendu
                         
-                        # --- STOCK DEDUCTION LOGIC ---
+                        # --- UPDATE GLOBAL WAREHOUSE STOCK ---
+                        # Calculate the sold_difference (the amount sold after any previous reconciliation)
+                        # Update the central warehouse stock by deducting the sold_difference atomically
                         if sold_difference != 0:
                             if hasattr(product, 'default_warehouse') and product.default_warehouse:
                                 warehouse = product.default_warehouse
                                 
                                 if sold_difference > 0:
                                     # Sales increased -> Deduct more from Stock
+                                    # Update Product.quantity (via Stock model) by deducting sold_difference
                                     Stock.objects.filter(
                                         product=product,
                                         warehouse=warehouse

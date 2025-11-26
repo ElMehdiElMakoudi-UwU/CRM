@@ -25,6 +25,7 @@ from .forms import SaleForm, SaleItemFormSet, PaymentForm
 from products.models import Product, Category
 from inventory.models import StockMovement
 from clients.models import Client
+from clients.forms import ClientForm
 from .services import UnifiedSalesService
 from pricing.services import PricingService
 from inventory.models import Warehouse
@@ -132,6 +133,38 @@ def get_product_price(request):
     return JsonResponse({'success': False, 'error': 'Méthode non autorisée'})
 
 @login_required
+def create_client_ajax(request):
+    """
+    Vue Ajax pour créer un client depuis la page de vente
+    """
+    if request.method == "POST":
+        # Handle empty segment value
+        post_data = request.POST.copy()
+        if post_data.get('segment') == '':
+            post_data['segment'] = None
+        
+        form = ClientForm(post_data)
+        if form.is_valid():
+            client = form.save(commit=False)
+            client.created_by = request.user
+            client.save()
+            return JsonResponse({
+                'success': True,
+                'client': {
+                    'id': client.id,
+                    'name': client.name,
+                    'phone': client.phone or '',
+                    'email': client.email or ''
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            }, status=400)
+    return JsonResponse({'success': False, 'error': 'Méthode non autorisée'}, status=405)
+
+@login_required
 @transaction.atomic
 def sale_create(request):
     if request.method == "POST":
@@ -214,12 +247,15 @@ def sale_create(request):
 
     categories = Category.objects.all()
     products = Product.objects.filter(is_active=True)
+    from clients.models import ClientSegment
+    segments = ClientSegment.objects.all()
     
     return render(request, 'sales/sale_form.html', {
         'form': form,
         'payment_form': payment_form,
         'categories': categories,
         'products': products,
+        'segments': segments,
     })
 
 def monthly_sales(request):

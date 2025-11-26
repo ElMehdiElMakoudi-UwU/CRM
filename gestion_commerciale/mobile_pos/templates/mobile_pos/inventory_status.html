@@ -1,0 +1,122 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block inner_title %}Statut de l'Inventaire{% endblock %}
+
+{% block inner_content %}
+<div class="space-y-4">
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-900">Mon Inventaire</h1>
+        {% if seller %}
+        <a href="{% url 'mobile_pos:mobile_load_inventory' %}" 
+           class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm">
+            + Demander
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- No Seller Profile Warning -->
+    {% if not seller %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex items-start gap-3">
+            <div class="text-2xl">⚠️</div>
+            <div class="flex-1">
+                <h3 class="font-semibold text-yellow-900 mb-1">Profil Vendeur Requis</h3>
+                <p class="text-sm text-yellow-800 mb-3">
+                    Vous devez être associé à un profil vendeur pour utiliser les fonctionnalités d'inventaire. 
+                    Veuillez contacter l'administrateur pour créer votre profil.
+                </p>
+                <a href="{% url 'mobile_pos:dashboard' %}" 
+                   class="inline-block px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm">
+                    Retour au tableau de bord
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    {% if seller %}
+    <div class="bg-white rounded-lg shadow-sm p-4 text-center">
+        <a href="{% url 'mobile_pos:mobile_load_inventory' %}" 
+           class="inline-block bg-indigo-600 text-white rounded-lg px-6 py-3 hover:bg-indigo-700 transition-colors font-medium">
+            <span class="text-xl mr-2">📦</span>
+            Demander de l'Inventaire
+        </a>
+        <p class="text-xs text-gray-500 mt-2">Le déchargement doit être effectué par un manager</p>
+    </div>
+    {% endif %}
+
+    <!-- Current Inventory -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <h2 class="font-semibold text-gray-900 mb-4">Inventaire Actuel</h2>
+        {% if current_inventory %}
+        <div class="space-y-2">
+            {% for item in current_inventory %}
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <div>
+                    <p class="font-medium text-gray-900">{{ item.product.name }}</p>
+                    <p class="text-xs text-gray-600">{{ item.product.selling_price }} MAD/unité</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-lg font-bold text-indigo-600">{{ item.quantity }}</p>
+                    <p class="text-xs text-gray-500">unités</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <p class="text-gray-600 mb-4">Aucun inventaire actuellement</p>
+            <a href="{% url 'mobile_pos:mobile_load_inventory' %}" 
+               class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                Demander de l'inventaire
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pending Requests -->
+    {% if pending_requests %}
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <h2 class="font-semibold text-gray-900 mb-4">Demandes en Attente</h2>
+        <div class="space-y-2">
+            {% for req in pending_requests %}
+            <div class="flex justify-between items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div>
+                    <p class="font-medium text-gray-900">{{ req.product.name }}</p>
+                    <p class="text-xs text-gray-600">{{ req.date|date:"d/m/Y" }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold text-yellow-800">{{ req.requested_quantity }} unités</p>
+                    <span class="text-xs px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full">En attente</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Validated -->
+    {% if recent_validated %}
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <h2 class="font-semibold text-gray-900 mb-4">Demandes Validées Récemment</h2>
+        <div class="space-y-2">
+            {% for req in recent_validated %}
+            <div class="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div>
+                    <p class="font-medium text-gray-900">{{ req.product.name }}</p>
+                    <p class="text-xs text-gray-600">{{ req.date|date:"d/m/Y" }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold text-green-800">{{ req.approved_quantity|default:req.requested_quantity }} unités</p>
+                    <span class="text-xs px-2 py-1 bg-green-200 text-green-800 rounded-full">Validée</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

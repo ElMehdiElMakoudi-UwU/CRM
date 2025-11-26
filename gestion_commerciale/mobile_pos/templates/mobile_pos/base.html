@@ -1,62 +1,64 @@
-{% extends 'base.html' %}
-{% load static %}
-
-{% block title %}{% block inner_title %}Mobile POS{% endblock %} - Gestion Commerciale{% endblock %}
-
-{# Override Tailwind CDN with local CSS for mobile POS #}
-{% block extra_head %}
-<link rel="stylesheet" href="{% static 'mobile_pos/css/mobile-pos.css' %}">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
-<style>
-    /* Remove sidebar margin on desktop */
-    @media (min-width: 768px) {
-        .md\:ml-64 {
-            margin-left: 0 !important;
-        }
-    }
-</style>
-<script>
-    // Register Service Worker for offline support
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            navigator.serviceWorker.register('{% url "mobile_pos:sw.js" %}').then(function(registration) {
-                console.log('ServiceWorker registration successful');
-            }).catch(function(err) {
-                console.log('ServiceWorker registration failed: ', err);
-            });
-        });
-    }
-
-    // Check online/offline status
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
-    function updateOnlineStatus(event) {
-        const status = navigator.onLine ? 'online' : 'offline';
-        const statusBar = document.getElementById('connection-status');
-        
-        if (statusBar) {
-            statusBar.className = `fixed top-0 left-0 right-0 text-center py-1 text-sm z-50 ${
-                status === 'online' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-black'
-            }`;
-            statusBar.textContent = status === 'online' ? 
-                '✅ Connecté' : 
-                '⚠️ Mode hors ligne - Les modifications seront synchronisées une fois la connexion rétablie';
-            
-            if (status === 'offline') {
-                statusBar.style.display = 'block';
-            } else {
-                setTimeout(() => {
-                    statusBar.style.display = 'none';
-                }, 3000);
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block inner_title %}Mobile POS{% endblock %} - Gestion Commerciale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'mobile_pos/css/mobile-pos.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet" />
+    <style>
+        /* Remove sidebar margin on desktop */
+        @media (min-width: 768px) {
+            .md\:ml-64 {
+                margin-left: 0 !important;
             }
         }
-    }
-</script>
-{% endblock %}
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full">
+    <div id="connection-status" style="display: none;"></div>
+    <script>
+        // Register Service Worker for offline support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('{% url "mobile_pos:sw.js" %}').then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                }).catch(function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
 
-{% block content %}
-<div class="min-h-full">
+        // Check online/offline status
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus(event) {
+            const status = navigator.onLine ? 'online' : 'offline';
+            const statusBar = document.getElementById('connection-status');
+            
+            if (statusBar) {
+                statusBar.className = `fixed top-0 left-0 right-0 text-center py-1 text-sm z-50 ${
+                    status === 'online' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-black'
+                }`;
+                statusBar.textContent = status === 'online' ? 
+                    '✅ Connecté' : 
+                    '⚠️ Mode hors ligne - Les modifications seront synchronisées une fois la connexion rétablie';
+                
+                if (status === 'offline') {
+                    statusBar.style.display = 'block';
+                } else {
+                    setTimeout(() => {
+                        statusBar.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        }
+    </script>
+    <div class="min-h-full">
     <!-- Navigation -->
     <nav class="bg-white shadow-sm">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -66,8 +68,14 @@
                         <a href="{% url 'mobile_pos:dashboard' %}" class="text-2xl font-bold text-indigo-600">POS</a>
                     </div>
                     <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="{% url 'mobile_pos:create_order' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'create_order' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Nouvelle vente</a>
-                        <a href="{% url 'mobile_pos:order_list' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'order_list' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Historique</a>
+                        <a href="{% url 'mobile_pos:sale_create_mobile' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'sale_create_mobile' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Nouvelle vente</a>
+                        <a href="{% url 'mobile_pos:mobile_inventory_status' %}" class="inline-flex items-center border-b-2 {% if 'inventory' in request.resolver_match.url_name and request.resolver_match.url_name != 'validate_inventory_requests' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Inventaire</a>
+                        {% if user.is_staff %}
+                        <a href="{% url 'mobile_pos:validate_inventory_requests' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'validate_inventory_requests' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Valider Demandes</a>
+                        <a href="{% url 'mobile_pos:manager_log_unload' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'manager_log_unload' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Enregistrer Déchargement</a>
+                        {% endif %}
+                        <a href="{% url 'mobile_pos:client_list_mobile' %}" class="inline-flex items-center border-b-2 {% if 'client' in request.resolver_match.url_name and request.resolver_match.url_name != 'client_outstanding_debt' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Clients</a>
+                        <a href="{% url 'mobile_pos:client_outstanding_debt' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'client_outstanding_debt' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Créances</a>
                         <a href="{% url 'mobile_pos:dashboard' %}" class="inline-flex items-center border-b-2 {% if request.resolver_match.url_name == 'dashboard' %}border-indigo-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} px-1 pt-1 text-sm font-medium">Tableau de bord</a>
                     </div>
                 </div>
@@ -112,8 +120,15 @@
         <!-- Mobile menu -->
         <div class="hidden sm:hidden" id="mobile-menu">
             <div class="space-y-1 pb-3 pt-2">
-                <a href="{% url 'mobile_pos:create_order' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'create_order' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Nouvelle vente</a>
-                <a href="{% url 'mobile_pos:order_list' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'order_list' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Historique</a>
+                <a href="{% url 'mobile_pos:sale_create_mobile' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'sale_create_mobile' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Nouvelle vente</a>
+                <a href="{% url 'mobile_pos:mobile_inventory_status' %}" class="block border-l-4 {% if 'inventory' in request.resolver_match.url_name and request.resolver_match.url_name != 'validate_inventory_requests' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Mon Inventaire</a>
+                {% if user.is_staff %}
+                <a href="{% url 'mobile_pos:validate_inventory_requests' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'validate_inventory_requests' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">⚡ Valider Demandes</a>
+                <a href="{% url 'mobile_pos:manager_log_unload' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'manager_log_unload' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">📤 Enregistrer Déchargement</a>
+                {% endif %}
+                <a href="{% url 'mobile_pos:client_list_mobile' %}" class="block border-l-4 {% if 'client' in request.resolver_match.url_name and request.resolver_match.url_name != 'client_outstanding_debt' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Clients</a>
+                <a href="{% url 'mobile_pos:client_outstanding_debt' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'client_outstanding_debt' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Créances</a>
+                <a href="{% url 'mobile_pos:sale_list_mobile' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'sale_list_mobile' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Mes ventes</a>
                 <a href="{% url 'mobile_pos:dashboard' %}" class="block border-l-4 {% if request.resolver_match.url_name == 'dashboard' %}border-indigo-500 bg-indigo-50 text-indigo-700{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700{% endif %} py-2 pl-3 pr-4 text-base font-medium">Tableau de bord</a>
             </div>
             <div class="border-t border-gray-200 pb-3 pt-4">
@@ -150,10 +165,11 @@
             {% block inner_content %}{% endblock %}
         </div>
     </main>
-</div>
+    </div>
 
-{% block extra_js %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
-<script src="{% static 'mobile_pos/js/mobile-pos.js' %}"></script>
-{% endblock %}
-{% endblock %} 
+    {% block extra_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+    <script src="{% static 'mobile_pos/js/mobile-pos.js' %}"></script>
+    {% endblock %}
+</body>
+</html> 

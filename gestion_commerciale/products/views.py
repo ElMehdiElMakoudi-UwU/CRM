@@ -7,9 +7,11 @@ from django.db import models
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 import csv
 import io
 from decimal import Decimal
+from datetime import datetime
 
 class ProductListView(LoginRequiredMixin, ListView):
     model = Product
@@ -133,17 +135,24 @@ def import_products_csv(request):
                     csv_data = csv_data[3:]
                 csv_text = csv_data.decode(encoding)
                 
-                # Nettoyer les en-têtes
+                # Détecter le délimiteur (semicolon ou comma)
                 first_line = csv_text.split('\n')[0]
-                headers = [h.strip() for h in first_line.split(',')]
+                delimiter = ';' if ';' in first_line else ','
+                
+                # Nettoyer les en-têtes
+                headers = [h.strip() for h in first_line.split(delimiter)]
                 print(f"En-têtes détectés: {headers}")  # Debug log
+                print(f"Délimiteur détecté: {delimiter}")  # Debug log
                 
                 io_string = io.StringIO(csv_text)
-                reader = csv.DictReader(io_string)
+                reader = csv.DictReader(io_string, delimiter=delimiter)
+                
+                # Normaliser les noms de colonnes (supprimer les espaces)
+                reader.fieldnames = [field.strip() for field in reader.fieldnames] if reader.fieldnames else []
                 
                 # Vérifier les colonnes requises
                 required_fields = ['name', 'reference', 'purchase_price', 'selling_price']
-                missing_fields = [field for field in required_fields if field not in headers]
+                missing_fields = [field for field in required_fields if field not in reader.fieldnames]
                 
                 if missing_fields:
                     messages.error(request, f'Colonnes manquantes dans le fichier CSV: {", ".join(missing_fields)}')
@@ -228,3 +237,121 @@ def import_products_csv(request):
         form = CSVImportForm()
 
     return render(request, 'products/import_products.html', {'form': form})
+
+
+@login_required
+def download_csv_template(request):
+    """Download a CSV template for importing products"""
+    # Create the HttpResponse object with the appropriate CSV header
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="products_template.csv"'
+    
+    # Add BOM for Excel compatibility
+    response.write('\ufeff')
+    
+    # Create a CSV writer with semicolon delimiter (matches import format)
+    writer = csv.writer(response, delimiter=';')
+    
+    # Write the header row with all possible fields
+    writer.writerow([
+        'name',
+        'reference',
+        'arabic_name',
+        'description',
+        'barcode',
+        'category',
+        'brand',
+        'unit',
+        'supplier',
+        'purchase_price',
+        'selling_price',
+        'tax_rate',
+        'is_active',
+    ])
+    
+    # Write a sample row with example values
+    writer.writerow([
+        'Exemple Produit',
+        'REF001',
+        'منتج مثال',
+        'Description du produit exemple',
+        '1234567890123',
+        'Catégorie Exemple',
+        'Marque Exemple',
+        'unit',
+        'Fournisseur Exemple',
+        '100.00',
+        '150.00',
+        '20.00',
+        'True',
+    ])
+    
+    return response
+
+
+@login_required
+def export_products_csv(request):
+    """Export all products and their data as CSV"""
+    # Create the HttpResponse object with the appropriate CSV header
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="products_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+    
+    # Add BOM for Excel compatibility
+    response.write('\ufeff')
+    
+    # Create a CSV writer
+    writer = csv.writer(response)
+    
+    # Write the header row
+    writer.writerow([
+        'ID',
+        'Nom',
+        'Nom en arabe',
+        'Référence',
+        'Code-barres',
+        'Description',
+        'Catégorie',
+        'Marque',
+        'Unité',
+        'Fournisseur',
+        'Prix d\'achat',
+        'Prix de vente',
+        'Taux de TVA (%)',
+        'Seuil de réapprovisionnement',
+        'Date d\'expiration',
+        'Produit en vedette',
+        'Entrepôt par défaut',
+        'Actif',
+        'Date de création',
+        'Date de mise à jour',
+    ])
+    
+    # Get all products with related data
+    products = Product.objects.select_related('category', 'supplier', 'default_warehouse').all().order_by('id')
+    
+    # Write data rows
+    for product in products:
+        writer.writerow([
+            product.id,
+            product.name,
+            product.arabic_name or '',
+            product.reference,
+            product.barcode or '',
+            product.description or '',
+            product.category.name if product.category else '',
+            product.brand or '',
+            product.get_unit_display() if product.unit else '',
+            product.supplier.name if product.supplier else '',
+            str(product.purchase_price),
+            str(product.selling_price),
+            str(product.tax_rate),
+            str(product.reorder_threshold),
+            product.expiration_date.strftime('%Y-%m-%d') if product.expiration_date else '',
+            'Oui' if product.is_featured else 'Non',
+            product.default_warehouse.name if product.default_warehouse else '',
+            'Oui' if product.is_active else 'Non',
+            product.created_at.strftime('%Y-%m-%d %H:%M:%S') if product.created_at else '',
+            product.updated_at.strftime('%Y-%m-%d %H:%M:%S') if product.updated_at else '',
+        ])
+    
+    return response

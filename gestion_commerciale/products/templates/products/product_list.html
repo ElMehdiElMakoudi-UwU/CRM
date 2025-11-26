@@ -16,6 +16,14 @@
         <i data-lucide="upload" class="w-4 h-4"></i>
         Importer CSV
       </a>
+      <a href="{% url 'products:download_csv_template' %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 w-full sm:w-auto text-center flex items-center justify-center gap-2">
+        <i data-lucide="file-text" class="w-4 h-4"></i>
+        Modèle CSV
+      </a>
+      <a href="{% url 'products:export_products' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 w-full sm:w-auto text-center flex items-center justify-center gap-2">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        Exporter CSV
+      </a>
     </div>
   </div>
 

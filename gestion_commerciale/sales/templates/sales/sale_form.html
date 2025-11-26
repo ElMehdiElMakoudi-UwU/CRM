@@ -14,8 +14,15 @@
       <h2 class="text-xl font-semibold text-gray-700 mb-4">👤 Informations générales</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          {{ form.client.label_tag }}
-          {{ form.client|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
+          <div class="flex items-end gap-2">
+            <div class="flex-1">
+              {{ form.client.label_tag }}
+              {{ form.client|add_class:"w-full border-gray-300 rounded px-3 py-2 border" }}
+            </div>
+            <button type="button" id="open-client-modal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 whitespace-nowrap">
+              ➕ Nouveau
+            </button>
+          </div>
         </div>
         <div class="md:col-span-2">
           {{ form.notes.label_tag }}
@@ -101,6 +108,59 @@
       </button>
     </div>
   </form>
+</div>
+
+<!-- Modal: Créer un client -->
+<div id="client-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+  <div class="bg-white max-w-md w-full rounded-lg shadow-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold text-gray-800">➕ Créer un nouveau client</h3>
+      <button type="button" id="close-client-modal" class="text-gray-500 hover:text-red-600 text-xl">&times;</button>
+    </div>
+    <form id="client-create-form" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+        <input type="text" name="name" required class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300 focus:border-blue-500">
+        <div id="client-name-error" class="text-red-500 text-sm mt-1 hidden"></div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+        <input type="text" name="phone" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300 focus:border-blue-500">
+        <div id="client-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input type="email" name="email" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300 focus:border-blue-500">
+        <div id="client-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+        <textarea name="address" rows="2" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300 focus:border-blue-500"></textarea>
+        <div id="client-address-error" class="text-red-500 text-sm mt-1 hidden"></div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Segment</label>
+        <select name="segment" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300 focus:border-blue-500">
+          <option value="">-- Aucun --</option>
+          {% for segment in segments %}
+          <option value="{{ segment.id }}">{{ segment.name }}</option>
+          {% endfor %}
+        </select>
+        <div id="client-segment-error" class="text-red-500 text-sm mt-1 hidden"></div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Seuil d'alerte (DH)</label>
+        <input type="number" name="alert_threshold" value="5000.00" step="0.01" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300 focus:border-blue-500">
+        <div id="client-alert_threshold-error" class="text-red-500 text-sm mt-1 hidden"></div>
+      </div>
+      <div class="flex justify-end gap-2 pt-4">
+        <button type="button" id="cancel-client-modal" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">Annuler</button>
+        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Créer</button>
+      </div>
+      <div id="client-form-error" class="text-red-500 text-sm mt-2 hidden"></div>
+    </form>
+  </div>
 </div>
 
 <!-- Modal: Sélecteur de produit -->
@@ -341,9 +401,171 @@ document.addEventListener('DOMContentLoaded', () => {
 
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.style.display = 'none';
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
     }
   });
+
+  // Client Modal
+  const clientModal = document.getElementById('client-modal');
+  const openClientBtn = document.getElementById('open-client-modal');
+  const closeClientBtn = document.getElementById('close-client-modal');
+  const cancelClientBtn = document.getElementById('cancel-client-modal');
+  const clientForm = document.getElementById('client-create-form');
+
+  // Debug: Check if elements exist
+  if (!clientModal) console.error('Client modal not found');
+  if (!openClientBtn) console.error('Open client button not found');
+  if (!clientForm) console.error('Client form not found');
+
+  // Open client modal
+  if (openClientBtn) {
+    openClientBtn.addEventListener('click', () => {
+      clientModal.classList.remove('hidden');
+      clientModal.classList.add('flex');
+      clientForm.reset();
+      // Clear all error messages - fix selector syntax
+      document.querySelectorAll('[id^="client-"][id$="-error"]').forEach(el => {
+        el.classList.add('hidden');
+        el.textContent = '';
+      });
+      const formErrorEl = document.getElementById('client-form-error');
+      if (formErrorEl) {
+        formErrorEl.classList.add('hidden');
+      }
+    });
+  }
+
+  // Close client modal
+  if (closeClientBtn) {
+    closeClientBtn.addEventListener('click', () => {
+      clientModal.classList.remove('flex');
+      clientModal.classList.add('hidden');
+    });
+  }
+
+  if (cancelClientBtn) {
+    cancelClientBtn.addEventListener('click', () => {
+      clientModal.classList.remove('flex');
+      clientModal.classList.add('hidden');
+    });
+  }
+
+  if (clientModal) {
+    clientModal.addEventListener('click', (e) => {
+      if (e.target === clientModal) {
+        clientModal.classList.remove('flex');
+        clientModal.classList.add('hidden');
+      }
+    });
+  }
+
+  // Handle client form submission
+  if (clientForm) {
+    clientForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      console.log('Form submission started');
+      
+      // Clear previous errors - fix selector syntax
+      document.querySelectorAll('[id^="client-"][id$="-error"]').forEach(el => {
+        el.classList.add('hidden');
+        el.textContent = '';
+      });
+      const formErrorEl = document.getElementById('client-form-error');
+      if (formErrorEl) {
+        formErrorEl.classList.add('hidden');
+        formErrorEl.textContent = '';
+      }
+
+      // Get CSRF token from the client form specifically
+      const csrfInput = clientForm.querySelector('[name=csrfmiddlewaretoken]');
+      if (!csrfInput) {
+        console.error('CSRF token not found in form');
+        if (formErrorEl) {
+          formErrorEl.textContent = 'Erreur: Token de sécurité introuvable. Veuillez recharger la page.';
+          formErrorEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const formData = new FormData(clientForm);
+      const csrfToken = csrfInput.value;
+
+      // Show loading state
+      const submitBtn = clientForm.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Création...';
+
+      try {
+        console.log('Sending request to /sales/create_client/');
+        const response = await fetch('/sales/create_client/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken
+          },
+          body: formData
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          // Add new client to dropdown
+          const option = document.createElement('option');
+          option.value = data.client.id;
+          option.textContent = data.client.name;
+          option.selected = true;
+          clientSelect.appendChild(option);
+
+          // Close modal
+          clientModal.classList.remove('flex');
+          clientModal.classList.add('hidden');
+          clientForm.reset();
+
+          // Trigger change event to update prices if products are already added
+          clientSelect.dispatchEvent(new Event('change'));
+
+          // Show success message
+          alert('Client créé avec succès!');
+        } else {
+          // Display errors
+          if (data.errors) {
+            Object.keys(data.errors).forEach(field => {
+              const errorElement = document.getElementById(`client-${field}-error`);
+              if (errorElement) {
+                errorElement.textContent = Array.isArray(data.errors[field]) ? data.errors[field][0] : data.errors[field];
+                errorElement.classList.remove('hidden');
+              }
+            });
+          } else if (data.error) {
+            if (formErrorEl) {
+              formErrorEl.textContent = data.error;
+              formErrorEl.classList.remove('hidden');
+            }
+          } else {
+            if (formErrorEl) {
+              formErrorEl.textContent = 'Une erreur est survenue lors de la création du client.';
+              formErrorEl.classList.remove('hidden');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la création du client:', error);
+        if (formErrorEl) {
+          formErrorEl.textContent = 'Une erreur est survenue. Veuillez réessayer.';
+          formErrorEl.classList.remove('hidden');
+        }
+      } finally {
+        // Restore button state
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      }
+    });
+  } else {
+    console.error('Client form not found');
+  }
 });
 </script>
 {% endblock %}

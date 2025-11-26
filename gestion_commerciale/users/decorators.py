@@ -13,7 +13,7 @@ def role_required(allowed_roles=[]):
             else:
                 messages.error(request, "Vous n'avez pas la permission d'accéder à cette page.")
                 if request.user.profile.role == 'sales_rep':
-                    return redirect('mobile_pos:create_order')
+                    return redirect('mobile_pos:dashboard')
                 return redirect('dashboard')
         return wrapper
     return decorator

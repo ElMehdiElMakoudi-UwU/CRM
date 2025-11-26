@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="p-4 max-w-xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">🏬 Ajouter un entrepôt</h1>
+
+    <form method="post" class="bg-white p-6 rounded shadow space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Nom</label>
+            {% render_field form.name class="mt-1 block w-full rounded border-2 border-gray-400 shadow-sm focus:ring focus:ring-blue-300 focus:border-blue-500" %}
+            {% if form.name.errors %}
+                <p class="text-red-500 text-sm">{{ form.name.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Lieu</label>
+            {% render_field form.location class="mt-1 block w-full rounded border-2 border-gray-400 shadow-sm focus:ring focus:ring-blue-300 focus:border-blue-500" %}
+            {% if form.location.errors %}
+                <p class="text-red-500 text-sm">{{ form.location.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex items-center gap-2">
+            {% render_field form.is_active class="rounded border-gray-400 focus:ring focus:ring-blue-300" %}
+            <label class="block text-sm font-medium text-gray-700">Actif</label>
+            {% if form.is_active.errors %}
+                <p class="text-red-500 text-sm">{{ form.is_active.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div class="pt-4">
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">💾 Enregistrer</button>
+            <a href="{% url 'inventory:warehouse_list' %}" class="ml-4 text-gray-500 hover:underline">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

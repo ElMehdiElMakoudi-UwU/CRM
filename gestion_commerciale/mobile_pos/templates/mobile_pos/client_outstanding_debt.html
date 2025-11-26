@@ -1,0 +1,115 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block inner_title %}Créances Clients{% endblock %}
+
+{% block inner_content %}
+<div class="space-y-4">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-900">Créances Clients</h1>
+        <a href="{% url 'mobile_pos:client_list_mobile' %}" 
+           class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            Retour
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <p class="text-sm text-gray-600 mb-1">Total Créances</p>
+            <p class="text-2xl font-bold text-red-600">{{ total_outstanding|floatformat:2 }} MAD</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <p class="text-sm text-gray-600 mb-1">Clients avec Dette</p>
+            <p class="text-2xl font-bold text-gray-900">{{ total_clients }}</p>
+        </div>
+    </div>
+
+    <!-- Clients with Debt -->
+    {% if clients_with_debt %}
+    <div class="space-y-3">
+        {% for client_data in clients_with_debt %}
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <!-- Client Header -->
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900">{{ client_data.client.name }}</h3>
+                        {% if client_data.client.phone %}
+                        <p class="text-sm text-gray-600 mt-1">{{ client_data.client.phone }}</p>
+                        {% endif %}
+                        {% if client_data.client.email %}
+                        <p class="text-sm text-gray-500">{{ client_data.client.email }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="text-right ml-4">
+                        <p class="text-xl font-bold text-red-600">{{ client_data.total_debt|floatformat:2 }} MAD</p>
+                        <p class="text-xs text-gray-500">{{ client_data.sales|length }} vente{{ client_data.sales|length|pluralize }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales List (Collapsible) -->
+            <div class="border-t border-gray-100">
+                <button type="button" 
+                        onclick="toggleSales('sales-{{ client_data.client.id }}')"
+                        class="w-full px-4 py-2 text-left text-sm font-medium text-indigo-600 hover:bg-gray-50 flex justify-between items-center">
+                    <span>Voir les ventes ({{ client_data.sales|length }})</span>
+                    <svg id="icon-{{ client_data.client.id }}" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="sales-{{ client_data.client.id }}" class="hidden">
+                    <div class="px-4 pb-4 space-y-2">
+                        {% for sale_info in client_data.sales %}
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="font-medium text-gray-900">Vente #{{ sale_info.sale.id }}</p>
+                                    <p class="text-xs text-gray-500">{{ sale_info.date|date:"d/m/Y H:i" }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-semibold text-red-600">{{ sale_info.balance_due|floatformat:2 }} MAD</p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ sale_info.sale.amount_paid|floatformat:2 }} / {{ sale_info.sale.total_amount|floatformat:2 }} MAD
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{% url 'mobile_pos:sale_detail_mobile' sale_info.sale.id %}" 
+                               class="text-xs text-indigo-600 hover:text-indigo-700">
+                                Voir les détails →
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+        <div class="text-4xl mb-4">✅</div>
+        <p class="text-gray-600 mb-2">Aucune créance en attente</p>
+        <p class="text-sm text-gray-500">Tous vos clients sont à jour dans leurs paiements.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleSales(clientId) {
+    const salesDiv = document.getElementById(clientId);
+    const icon = document.getElementById('icon-' + clientId.split('-')[1]);
+    
+    if (salesDiv.classList.contains('hidden')) {
+        salesDiv.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+    } else {
+        salesDiv.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+    }
+}
+</script>
+{% endblock %}
+

@@ -1,0 +1,62 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block inner_title %}Décharger Inventaire{% endblock %}
+
+{% block inner_content %}
+<div class="space-y-4">
+    <h1 class="text-2xl font-bold text-gray-900">Décharger Inventaire</h1>
+    
+    <p class="text-sm text-gray-600">Indiquez les quantités à décharger (vendues ou retournées)</p>
+    
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <h2 class="font-semibold text-gray-900 mb-4">Inventaire Actuel</h2>
+            
+            <div class="space-y-3">
+                {% for item in inventory %}
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900">{{ item.product.name }}</p>
+                        <p class="text-sm text-gray-600">Stock actuel: <span class="font-semibold">{{ item.quantity }}</span></p>
+                    </div>
+                    <div class="w-24">
+                        <input type="number" 
+                               name="unload_{{ item.product.id }}" 
+                               min="0" 
+                               max="{{ item.quantity }}"
+                               value="0"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                               placeholder="Qté">
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8">
+                    <p class="text-gray-600 mb-4">Aucun inventaire disponible</p>
+                    <a href="{% url 'mobile_pos:mobile_load_inventory' %}" 
+                       class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                        Demander de l'inventaire
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if inventory %}
+        <!-- Submit Button -->
+        <div class="flex gap-3">
+            <button type="submit" class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+                Enregistrer le Déchargement
+            </button>
+            <a href="{% url 'mobile_pos:mobile_inventory_status' %}" 
+               class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                Annuler
+            </a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
+

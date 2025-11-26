@@ -12,7 +12,7 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Aujourd'hui</h3>
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-600">Commandes</span>
+                    <span class="text-gray-600">Ventes</span>
                     <span class="text-xl font-semibold">{{ today_orders_count }}</span>
                 </div>
                 <div class="flex justify-between items-center">
@@ -32,36 +32,60 @@
         <div class="p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
             <div class="space-y-3">
-                <a href="{% url 'mobile_pos:create_order' %}" 
-                   class="block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors">
-                    Nouvelle Commande
+                <a href="{% url 'mobile_pos:sale_create_mobile' %}" 
+                   class="block w-full text-center px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                    Nouvelle Vente
                 </a>
-                <a href="{% url 'mobile_pos:order_list' %}" 
-                   class="block w-full text-center px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Voir les Commandes
+                <a href="{% url 'mobile_pos:mobile_inventory_status' %}" 
+                   class="block w-full text-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    Mon Inventaire
+                </a>
+                <a href="{% url 'mobile_pos:client_create_mobile' %}" 
+                   class="block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Nouveau Client
+                </a>
+                {% if user.is_staff %}
+                <a href="{% url 'mobile_pos:validate_inventory_requests' %}" 
+                   class="block w-full text-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                    ⚡ Valider Demandes
+                </a>
+                {% endif %}
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <a href="{% url 'mobile_pos:sale_list_mobile' %}" 
+                       class="block text-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                        Mes Ventes
+                    </a>
+                    <a href="{% url 'mobile_pos:mobile_load_inventory' %}" 
+                       class="block text-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                        Demander
+                    </a>
+                </div>
+                <a href="{% url 'mobile_pos:client_outstanding_debt' %}" 
+                   class="block w-full text-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium mt-3">
+                    💰 Créances Clients
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Recent Orders -->
+    <!-- Recent Sales -->
     <div class="md:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Commandes Récentes</h3>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ventes Récentes</h3>
             <div class="space-y-4">
-                {% for order in recent_orders %}
+                {% for sale in recent_orders %}
                 <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                     <div>
-                        <p class="font-medium">{{ order.client.name }}</p>
-                        <p class="text-sm text-gray-600">{{ order.created_at|date:"j F Y H:i" }}</p>
+                        <p class="font-medium">{% if sale.client %}{{ sale.client.name }}{% else %}Client anonyme{% endif %}</p>
+                        <p class="text-sm text-gray-600">{{ sale.date|date:"j F Y H:i" }}</p>
                     </div>
                     <div class="text-right">
-                        <p class="font-semibold">{{ order.total_amount }} MAD</p>
-                        <p class="text-sm text-gray-600">{{ order.items.count }} articles</p>
+                        <p class="font-semibold">{{ sale.total_amount }} MAD</p>
+                        <p class="text-sm text-gray-600">{{ sale.items.count }} article{{ sale.items.count|pluralize }}</p>
                     </div>
                 </div>
                 {% empty %}
-                <p class="text-center text-gray-600">Aucune commande récente</p>
+                <p class="text-center text-gray-600">Aucune vente récente</p>
                 {% endfor %}
             </div>
         </div>

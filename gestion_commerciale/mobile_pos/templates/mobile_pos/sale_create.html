@@ -1,0 +1,840 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block inner_title %}Nouvelle Vente{% endblock %}
+
+{% block inner_content %}
+<div class="space-y-4">
+    <h1 class="text-2xl font-bold text-gray-900">Nouvelle Vente</h1>
+    
+    <form method="post" id="sale-form" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Client Selection -->
+        <div class="bg-white rounded-lg shadow-sm p-4 space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="font-semibold text-gray-900">Client</h2>
+                <button type="button" onclick="openCreateClientModal()" class="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Nouveau
+                </button>
+            </div>
+            
+            <!-- Client Search -->
+            <div class="relative">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Rechercher un client</label>
+                <div class="relative">
+                    <input type="text" 
+                           id="client-search" 
+                           placeholder="Rechercher par nom ou téléphone..." 
+                           class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                           autocomplete="off">
+                    <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                
+                <!-- Search Results Dropdown -->
+                <div id="client-search-results" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                    <!-- Results will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Selected Client Info -->
+            <div id="selected-client-info" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-2">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h3 id="selected-client-name" class="font-semibold text-gray-900"></h3>
+                        <p id="selected-client-contact" class="text-sm text-gray-600"></p>
+                    </div>
+                    <button type="button" onclick="clearClientSelection()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="client-history" class="space-y-1 text-sm">
+                    <!-- History will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Hidden input for form submission -->
+            <input type="hidden" name="client_id" id="client-id-input" value="">
+        </div>
+
+        <!-- Seller Inventory Info -->
+        {% if seller %}
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p class="text-sm text-blue-800">
+                <strong>Votre inventaire:</strong> Seuls les produits en stock dans votre inventaire sont disponibles pour la vente.
+            </p>
+        </div>
+        {% else %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p class="text-sm text-yellow-800">
+                ⚠️ Vous n'êtes pas associé à un vendeur. Impossible de créer une vente.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Products Section -->
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold text-gray-900">Produits</h2>
+                {% if seller and products_with_stock %}
+                <div class="flex gap-2">
+                    <button type="button" onclick="openBarcodeScanner()" class="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                        </svg>
+                        Scanner
+                    </button>
+                    <button type="button" onclick="addProductRow()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">
+                        + Ajouter
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if not seller %}
+            <div class="text-center py-8">
+                <p class="text-gray-600">Vous devez être associé à un vendeur pour créer une vente.</p>
+            </div>
+            {% elif not products_with_stock %}
+            <div class="text-center py-8">
+                <p class="text-gray-600 mb-4">Aucun produit en stock dans votre inventaire.</p>
+                <a href="{% url 'mobile_pos:mobile_load_inventory' %}" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    Demander de l'inventaire
+                </a>
+            </div>
+            {% else %}
+            
+            <div id="products-container" class="space-y-3">
+                <!-- Product rows will be added here -->
+            </div>
+            
+            <div class="mt-4 pt-4 border-t">
+                <div class="flex justify-between items-center text-lg font-bold">
+                    <span>Total:</span>
+                    <span id="total-amount">0.00 MAD</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Payment -->
+        <div class="bg-white rounded-lg shadow-sm p-4">
+            <h2 class="font-semibold text-gray-900 mb-4">Paiement</h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Montant payé</label>
+                <input type="number" name="amount_paid" id="amount_paid" step="0.01" min="0" value="0" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       onchange="updateBalance()">
+            </div>
+            <div class="mt-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">Reste à payer:</span>
+                    <span id="balance-due" class="font-semibold">0.00 MAD</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Notes (optionnel)</label>
+            <textarea name="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex gap-3">
+            {% if seller and products_with_stock %}
+            <button type="submit" class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+                Créer la Vente
+            </button>
+            {% else %}
+            <button type="button" disabled class="flex-1 px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
+                Créer la Vente
+            </button>
+            {% endif %}
+            <a href="{% url 'mobile_pos:sale_list_mobile' %}" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Create Client Modal -->
+<div id="create-client-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Nouveau Client</h3>
+            <button type="button" onclick="closeCreateClientModal()" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="create-client-form" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Nom du client *</label>
+                <input type="text" name="name" id="client-name" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       placeholder="Nom du client">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+                <input type="text" name="phone" id="client-phone"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       placeholder="Téléphone">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" name="email" id="client-email"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       placeholder="Email (optionnel)">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+                <textarea name="address" id="client-address" rows="2"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                          placeholder="Adresse (optionnel)"></textarea>
+            </div>
+            
+            {% if segments %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Segment</label>
+                <select name="segment" id="client-segment"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <option value="">-- Aucun segment --</option>
+                    {% for segment in segments %}
+                    <option value="{{ segment.id }}">{{ segment.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            
+            <div id="create-client-error" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg"></div>
+            <div id="create-client-success" class="hidden text-sm text-green-600 bg-green-50 p-3 rounded-lg"></div>
+            
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+                    Créer
+                </button>
+                <button type="button" onclick="closeCreateClientModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Barcode Scanner Modal -->
+<div id="barcode-scanner-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-4 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Scanner Code-barres</h3>
+            <button type="button" onclick="closeBarcodeScanner()" class="text-gray-500 hover:text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="barcode-scanner-container" class="mb-4">
+            <div id="reader" class="w-full"></div>
+        </div>
+        <div id="barcode-status" class="text-sm text-center text-gray-600 mb-4"></div>
+        <div class="flex gap-2">
+            <button type="button" onclick="closeBarcodeScanner()" class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Include html5-qrcode library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+let productRowCount = 0;
+let totalAmount = 0;
+const products = [
+    {% for item in products_with_stock %}
+    {id: {{ item.product.id }}, name: "{{ item.product.name|escapejs }}", price: {{ item.product.selling_price }}, stock: {{ item.available_stock }}, barcode: "{{ item.product.barcode|default:''|escapejs }}"},
+    {% endfor %}
+];
+
+function addProductRow() {
+    productRowCount++;
+    const container = document.getElementById('products-container');
+    const row = document.createElement('div');
+    row.className = 'flex gap-2 items-end bg-gray-50 p-3 rounded-lg';
+    row.id = `product-row-${productRowCount}`;
+    
+    row.innerHTML = `
+        <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Produit</label>
+            <select name="product_id[]" class="product-select w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="updateProductPrice(${productRowCount})" required>
+                <option value="">Sélectionner...</option>
+                ${products.map(p => `<option value="${p.id}" data-price="${p.price}" data-stock="${p.stock}">${p.name} - ${p.price} MAD (Stock: ${p.stock})</option>`).join('')}
+            </select>
+        </div>
+        <div class="w-24">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Quantité</label>
+            <input type="number" name="quantity[]" min="1" value="1" class="quantity-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
+                   onchange="updateTotal()" oninput="checkStock(${productRowCount})" required>
+        </div>
+        <div class="w-20">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Prix</label>
+            <input type="text" class="price-display w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100" readonly>
+        </div>
+        <div class="w-16">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Stock</label>
+            <input type="text" class="stock-display w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100 text-xs" readonly>
+        </div>
+        <button type="button" onclick="removeProductRow(${productRowCount})" class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    
+    container.appendChild(row);
+}
+
+function removeProductRow(id) {
+    const row = document.getElementById(`product-row-${id}`);
+    if (row) row.remove();
+    updateTotal();
+}
+
+function updateProductPrice(rowId) {
+    const row = document.getElementById(`product-row-${rowId}`);
+    const select = row.querySelector('.product-select');
+    const priceDisplay = row.querySelector('.price-display');
+    const stockDisplay = row.querySelector('.stock-display');
+    const quantityInput = row.querySelector('.quantity-input');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        const price = selectedOption.getAttribute('data-price');
+        const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
+        priceDisplay.value = price + ' MAD';
+        stockDisplay.value = stock;
+        // Set max quantity to available stock
+        quantityInput.max = stock;
+        // Reset quantity if it exceeds stock
+        if (parseInt(quantityInput.value) > stock) {
+            quantityInput.value = stock > 0 ? stock : 1;
+        }
+    } else {
+        priceDisplay.value = '';
+        stockDisplay.value = '';
+        quantityInput.max = '';
+    }
+    updateTotal();
+}
+
+function checkStock(rowId) {
+    const row = document.getElementById(`product-row-${rowId}`);
+    const select = row.querySelector('.product-select');
+    const quantityInput = row.querySelector('.quantity-input');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
+        const requested = parseInt(quantityInput.value) || 0;
+        
+        if (requested > stock) {
+            quantityInput.value = stock > 0 ? stock : 1;
+            alert(`Stock insuffisant. Stock disponible: ${stock}`);
+        }
+    }
+    updateTotal();
+}
+
+function updateTotal() {
+    totalAmount = 0;
+    const rows = document.querySelectorAll('[id^="product-row-"]');
+    
+    rows.forEach(row => {
+        const select = row.querySelector('.product-select');
+        const quantityInput = row.querySelector('.quantity-input');
+        
+        if (select.value && quantityInput.value) {
+            const selectedOption = select.options[select.selectedIndex];
+            const price = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+            const quantity = parseInt(quantityInput.value) || 0;
+            totalAmount += price * quantity;
+        }
+    });
+    
+    document.getElementById('total-amount').textContent = totalAmount.toFixed(2) + ' MAD';
+    updateBalance();
+}
+
+function updateBalance() {
+    const amountPaid = parseFloat(document.getElementById('amount_paid').value) || 0;
+    const balance = totalAmount - amountPaid;
+    document.getElementById('balance-due').textContent = balance.toFixed(2) + ' MAD';
+}
+
+// Create Client Modal Functions
+function openCreateClientModal() {
+    const modal = document.getElementById('create-client-modal');
+    modal.classList.remove('hidden');
+    // Reset form
+    document.getElementById('create-client-form').reset();
+    document.getElementById('create-client-error').classList.add('hidden');
+    document.getElementById('create-client-success').classList.add('hidden');
+}
+
+function closeCreateClientModal() {
+    const modal = document.getElementById('create-client-modal');
+    modal.classList.add('hidden');
+    // Reset form
+    document.getElementById('create-client-form').reset();
+    document.getElementById('create-client-error').classList.add('hidden');
+    document.getElementById('create-client-success').classList.add('hidden');
+}
+
+// Handle create client form submission
+document.getElementById('create-client-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const errorDiv = document.getElementById('create-client-error');
+    const successDiv = document.getElementById('create-client-success');
+    const submitButton = this.querySelector('button[type="submit"]');
+    
+    // Hide previous messages
+    errorDiv.classList.add('hidden');
+    successDiv.classList.add('hidden');
+    
+    // Disable submit button
+    submitButton.disabled = true;
+    submitButton.textContent = 'Création...';
+    
+    try {
+        const response = await fetch('{% url "mobile_pos:api_create_client" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // Select the newly created client
+            selectClientFromData(data.client);
+            
+            // Show success message
+            successDiv.textContent = data.message;
+            successDiv.classList.remove('hidden');
+            
+            // Close modal after short delay
+            setTimeout(() => {
+                closeCreateClientModal();
+            }, 1500);
+        } else {
+            // Show error message
+            errorDiv.textContent = data.message || 'Erreur lors de la création du client';
+            errorDiv.classList.remove('hidden');
+        }
+    } catch (error) {
+        errorDiv.textContent = 'Erreur de connexion. Veuillez réessayer.';
+        errorDiv.classList.remove('hidden');
+        console.error('Error creating client:', error);
+    } finally {
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.textContent = 'Créer';
+    }
+});
+
+// Add first product row on load (only if products are available)
+document.addEventListener('DOMContentLoaded', function() {
+    {% if seller and products_with_stock %}
+    addProductRow();
+    {% endif %}
+});
+
+// Client Search Functionality
+let clientSearchTimeout = null;
+let selectedClient = null;
+
+document.getElementById('client-search').addEventListener('input', function(e) {
+    const query = e.target.value.trim();
+    const resultsDiv = document.getElementById('client-search-results');
+    
+    // Clear previous timeout
+    if (clientSearchTimeout) {
+        clearTimeout(clientSearchTimeout);
+    }
+    
+    // Hide results if query is too short
+    if (query.length < 2) {
+        resultsDiv.classList.add('hidden');
+        return;
+    }
+    
+    // Debounce search
+    clientSearchTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`{% url 'mobile_pos:api_search_clients' %}?q=${encodeURIComponent(query)}`, {
+                method: 'GET',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                displayClientResults(data.clients);
+            } else {
+                resultsDiv.innerHTML = `<div class="p-4 text-sm text-gray-600 text-center">${data.message || 'Aucun résultat'}</div>`;
+                resultsDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error searching clients:', error);
+            resultsDiv.innerHTML = '<div class="p-4 text-sm text-red-600 text-center">Erreur de recherche</div>';
+            resultsDiv.classList.remove('hidden');
+        }
+    }, 300);
+});
+
+function displayClientResults(clients) {
+    const resultsDiv = document.getElementById('client-search-results');
+    
+    if (clients.length === 0) {
+        resultsDiv.innerHTML = '<div class="p-4 text-sm text-gray-600 text-center">Aucun client trouvé</div>';
+        resultsDiv.classList.remove('hidden');
+        return;
+    }
+    
+    let html = '';
+    clients.forEach(client => {
+        html += `
+            <div class="p-3 border-b border-gray-200 hover:bg-gray-50 cursor-pointer client-result-item" 
+                 data-client-id="${client.id}"
+                 data-client-name="${client.name}"
+                 data-client-phone="${client.phone || ''}"
+                 data-client-email="${client.email || ''}"
+                 data-last-order="${client.last_order_date || 'Jamais'}"
+                 data-total-spent="${client.total_spent}"
+                 data-total-orders="${client.total_orders}"
+                 data-favorite-products='${JSON.stringify(client.favorite_products)}'
+                 onclick="selectClient(this)">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900">${client.name}</p>
+                        ${client.phone ? `<p class="text-sm text-gray-600">${client.phone}</p>` : ''}
+                    </div>
+                    <div class="text-right text-xs text-gray-500">
+                        ${client.total_orders > 0 ? `<p>${client.total_orders} commande${client.total_orders > 1 ? 's' : ''}</p>` : '<p>Aucune commande</p>'}
+                    </div>
+                </div>
+                ${client.last_order_date ? `<p class="text-xs text-gray-500 mt-1">Dernière commande: ${client.last_order_date}</p>` : ''}
+                ${parseFloat(client.total_spent) > 0 ? `<p class="text-xs text-indigo-600 mt-1">Total dépensé: ${parseFloat(client.total_spent).toFixed(2)} MAD</p>` : ''}
+            </div>
+        `;
+    });
+    
+    resultsDiv.innerHTML = html;
+    resultsDiv.classList.remove('hidden');
+}
+
+function selectClient(element) {
+    const clientId = element.getAttribute('data-client-id');
+    const clientName = element.getAttribute('data-client-name');
+    const clientPhone = element.getAttribute('data-client-phone');
+    const clientEmail = element.getAttribute('data-client-email');
+    const lastOrder = element.getAttribute('data-last-order');
+    const totalSpent = element.getAttribute('data-total-spent');
+    const totalOrders = element.getAttribute('data-total-orders');
+    const favoriteProducts = JSON.parse(element.getAttribute('data-favorite-products'));
+    
+    // Store selected client
+    selectedClient = {
+        id: clientId,
+        name: clientName,
+        phone: clientPhone,
+        email: clientEmail,
+        lastOrder: lastOrder,
+        totalSpent: totalSpent,
+        totalOrders: totalOrders,
+        favoriteProducts: favoriteProducts
+    };
+    
+    // Update hidden input
+    document.getElementById('client-id-input').value = clientId;
+    
+    // Update selected client info display
+    document.getElementById('selected-client-name').textContent = clientName;
+    let contactInfo = '';
+    if (clientPhone) contactInfo += `📞 ${clientPhone}`;
+    if (clientEmail) contactInfo += (contactInfo ? ' • ' : '') + `✉️ ${clientEmail}`;
+    document.getElementById('selected-client-contact').textContent = contactInfo || 'Aucune information de contact';
+    
+    // Display history
+    let historyHtml = '';
+    if (lastOrder !== 'Jamais') {
+        historyHtml += `<div class="flex items-center gap-2 text-sm">
+            <span class="text-gray-600">📅 Dernière commande:</span>
+            <span class="font-medium">${lastOrder}</span>
+        </div>`;
+    }
+    
+    if (parseFloat(totalSpent) > 0) {
+        historyHtml += `<div class="flex items-center gap-2 text-sm">
+            <span class="text-gray-600">💰 Total dépensé:</span>
+            <span class="font-medium text-indigo-600">${parseFloat(totalSpent).toFixed(2)} MAD</span>
+        </div>`;
+    }
+    
+    if (totalOrders > 0) {
+        historyHtml += `<div class="flex items-center gap-2 text-sm">
+            <span class="text-gray-600">📦 Commandes:</span>
+            <span class="font-medium">${totalOrders}</span>
+        </div>`;
+    }
+    
+    if (favoriteProducts && favoriteProducts.length > 0) {
+        historyHtml += `<div class="flex items-start gap-2 text-sm mt-2">
+            <span class="text-gray-600">⭐ Produits favoris:</span>
+            <div class="flex-1">
+                ${favoriteProducts.map(p => `<span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded mr-1 mb-1">${p.name} (${p.purchase_count}x)</span>`).join('')}
+            </div>
+        </div>`;
+    }
+    
+    if (!historyHtml) {
+        historyHtml = '<p class="text-sm text-gray-500">Aucun historique disponible</p>';
+    }
+    
+    document.getElementById('client-history').innerHTML = historyHtml;
+    
+    // Show selected client info
+    document.getElementById('selected-client-info').classList.remove('hidden');
+    
+    // Hide search results and clear search
+    document.getElementById('client-search-results').classList.add('hidden');
+    document.getElementById('client-search').value = '';
+}
+
+function selectClientFromData(clientData) {
+    // Create a temporary element to use selectClient function
+    const tempDiv = document.createElement('div');
+    tempDiv.setAttribute('data-client-id', clientData.id);
+    tempDiv.setAttribute('data-client-name', clientData.name);
+    tempDiv.setAttribute('data-client-phone', clientData.phone || '');
+    tempDiv.setAttribute('data-client-email', clientData.email || '');
+    tempDiv.setAttribute('data-last-order', 'Jamais');
+    tempDiv.setAttribute('data-total-spent', '0');
+    tempDiv.setAttribute('data-total-orders', '0');
+    tempDiv.setAttribute('data-favorite-products', '[]');
+    selectClient(tempDiv);
+}
+
+function clearClientSelection() {
+    selectedClient = null;
+    document.getElementById('client-id-input').value = '';
+    document.getElementById('selected-client-info').classList.add('hidden');
+    document.getElementById('client-search').value = '';
+}
+
+// Close search results when clicking outside
+document.addEventListener('click', function(e) {
+    const searchContainer = document.getElementById('client-search').closest('.relative');
+    if (!searchContainer.contains(e.target)) {
+        document.getElementById('client-search-results').classList.add('hidden');
+    }
+});
+
+// Barcode Scanner Functions
+let html5QrcodeScanner = null;
+
+function openBarcodeScanner() {
+    const modal = document.getElementById('barcode-scanner-modal');
+    const statusDiv = document.getElementById('barcode-status');
+    modal.classList.remove('hidden');
+    statusDiv.textContent = 'Initialisation du scanner...';
+    
+    // Initialize scanner
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    
+    html5QrcodeScanner.start(
+        { facingMode: "environment" }, // Use back camera
+        {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.EAN_8,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_93,
+                Html5QrcodeSupportedFormats.ITF
+            ]
+        },
+        (decodedText, decodedResult) => {
+            // Success callback
+            statusDiv.textContent = `Code-barres détecté: ${decodedText}`;
+            handleBarcodeScanned(decodedText);
+        },
+        (errorMessage) => {
+            // Error callback - ignore, scanner will keep trying
+        }
+    ).catch((err) => {
+        statusDiv.textContent = `Erreur: ${err}`;
+        console.error("Unable to start scanning", err);
+    });
+}
+
+function closeBarcodeScanner() {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+        }).catch((err) => {
+            console.error("Error stopping scanner", err);
+        });
+    }
+    const modal = document.getElementById('barcode-scanner-modal');
+    modal.classList.add('hidden');
+    const statusDiv = document.getElementById('barcode-status');
+    statusDiv.textContent = '';
+}
+
+async function handleBarcodeScanned(barcode) {
+    const statusDiv = document.getElementById('barcode-status');
+    statusDiv.textContent = 'Recherche du produit...';
+    
+    try {
+        const response = await fetch(`{% url 'mobile_pos:api_product_by_barcode' %}?barcode=${encodeURIComponent(barcode)}`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.product) {
+            const product = data.product;
+            
+            if (!product.in_stock) {
+                statusDiv.textContent = `Produit trouvé mais pas en stock (${product.name})`;
+                statusDiv.className = 'text-sm text-center text-yellow-600 mb-4';
+                setTimeout(() => {
+                    statusDiv.textContent = '';
+                    statusDiv.className = 'text-sm text-center text-gray-600 mb-4';
+                }, 3000);
+                return;
+            }
+            
+            // Add product to sale
+            addProductByBarcode(product);
+            statusDiv.textContent = `Produit ajouté: ${product.name}`;
+            statusDiv.className = 'text-sm text-center text-green-600 mb-4';
+            
+            // Close scanner after short delay
+            setTimeout(() => {
+                closeBarcodeScanner();
+            }, 1000);
+        } else {
+            statusDiv.textContent = data.message || 'Produit non trouvé';
+            statusDiv.className = 'text-sm text-center text-red-600 mb-4';
+            setTimeout(() => {
+                statusDiv.textContent = '';
+                statusDiv.className = 'text-sm text-center text-gray-600 mb-4';
+            }, 3000);
+        }
+    } catch (error) {
+        statusDiv.textContent = 'Erreur lors de la recherche';
+        statusDiv.className = 'text-sm text-center text-red-600 mb-4';
+        console.error('Error fetching product:', error);
+    }
+}
+
+function addProductByBarcode(product) {
+    // Find the product in our products array to get the correct stock
+    const productInList = products.find(p => p.id == product.id);
+    if (!productInList) {
+        alert('Produit non trouvé dans la liste des produits disponibles');
+        return;
+    }
+    
+    // Check if product already exists in the form
+    const existingRows = document.querySelectorAll('[id^="product-row-"]');
+    for (let row of existingRows) {
+        const select = row.querySelector('.product-select');
+        if (select.value == product.id) {
+            // Product already added, just increment quantity
+            const quantityInput = row.querySelector('.quantity-input');
+            const currentQty = parseInt(quantityInput.value) || 0;
+            const maxQty = parseInt(productInList.stock);
+            if (currentQty < maxQty) {
+                quantityInput.value = Math.min(currentQty + 1, maxQty);
+                updateTotal();
+            } else {
+                alert(`Stock maximum atteint pour ${product.name}`);
+            }
+            return;
+        }
+    }
+    
+    // Add new product row
+    productRowCount++;
+    const container = document.getElementById('products-container');
+    const row = document.createElement('div');
+    row.className = 'flex gap-2 items-end bg-gray-50 p-3 rounded-lg';
+    row.id = `product-row-${productRowCount}`;
+    
+    row.innerHTML = `
+        <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Produit</label>
+            <select name="product_id[]" class="product-select w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="updateProductPrice(${productRowCount})" required>
+                <option value="">Sélectionner...</option>
+                ${products.map(p => `<option value="${p.id}" data-price="${p.price}" data-stock="${p.stock}" ${p.id == product.id ? 'selected' : ''}>${p.name} - ${p.price} MAD (Stock: ${p.stock})</option>`).join('')}
+            </select>
+        </div>
+        <div class="w-24">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Quantité</label>
+            <input type="number" name="quantity[]" min="1" value="1" max="${productInList.stock}" class="quantity-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" 
+                   onchange="updateTotal()" oninput="checkStock(${productRowCount})" required>
+        </div>
+        <div class="w-20">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Prix</label>
+            <input type="text" class="price-display w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100" value="${product.selling_price} MAD" readonly>
+        </div>
+        <div class="w-16">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Stock</label>
+            <input type="text" class="stock-display w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100 text-xs" value="${productInList.stock}" readonly>
+        </div>
+        <button type="button" onclick="removeProductRow(${productRowCount})" class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    
+    container.appendChild(row);
+    updateProductPrice(productRowCount);
+    updateTotal();
+}
+</script>
+{% endblock %}
+

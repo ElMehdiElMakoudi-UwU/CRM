@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from products.models import Product
 from .models import Stock, StockMovement, StockAlert, Warehouse
-from .forms import StockMovementForm, StockForm
+from .forms import StockMovementForm, StockForm, WarehouseForm
 from django.utils import timezone
 from django.db.models import Sum, F, Q
 from itertools import groupby
@@ -149,6 +149,19 @@ def stock_alerts_view(request):
 def warehouse_list_view(request):
     warehouses = Warehouse.objects.all()
     return render(request, 'inventory/warehouse_list.html', {'warehouses': warehouses})
+
+@login_required
+def warehouse_create_view(request):
+    if request.method == 'POST':
+        form = WarehouseForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Entrepôt créé avec succès.")
+            return redirect('inventory:warehouse_list')
+    else:
+        form = WarehouseForm()
+    
+    return render(request, 'inventory/warehouse_form.html', {'form': form})
 
 @login_required
 def warehouse_inventory_summary_view(request, warehouse_id):

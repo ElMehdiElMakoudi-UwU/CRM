@@ -140,3 +140,83 @@ class SalesRepPerformance(models.Model):
                     'conversion_rate': conversion_rate
                 }
             )
+
+
+class InventoryRequest(models.Model):
+    """Model for sales reps to request inventory they want to load"""
+    REQUEST_STATUS = (
+        ('pending', 'En attente'),
+        ('approved', 'Approuvé'),
+        ('rejected', 'Rejeté'),
+        ('fulfilled', 'Rempli'),
+    )
+    
+    sales_rep = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inventory_requests')
+    warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, null=True, blank=True)
+    request_date = models.DateTimeField(default=timezone.now)
+    status = models.CharField(max_length=20, choices=REQUEST_STATUS, default='pending')
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_requests')
+    approved_at = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"Demande #{self.id} - {self.sales_rep.username} - {self.get_status_display()}"
+    
+    @property
+    def total_items(self):
+        from django.db.models import Sum
+        return self.items.aggregate(total=Sum('quantity'))['total'] or 0
+
+
+class InventoryRequestItem(models.Model):
+    """Items in an inventory request"""
+    request = models.ForeignKey(InventoryRequest, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    notes = models.CharField(max_length=255, blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name} - Demande #{self.request.id}"
+
+
+class InventoryLoadRequest(models.Model):
+    """Request from seller to load inventory - needs manager validation"""
+    seller = models.ForeignKey('operations.Seller', on_delete=models.CASCADE, related_name='load_requests')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    requested_quantity = models.PositiveIntegerField(help_text="Quantity requested by sales rep")
+    approved_quantity = models.PositiveIntegerField(null=True, blank=True, help_text="Quantity approved by manager")
+    date = models.DateField()
+    validated = models.BooleanField(default=False)
+    validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='validated_load_requests')
+    validated_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True, help_text="Manager notes or reason for modification")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['seller', 'product', 'date', 'validated']
+        ordering = ['-date', '-created_at']
+    
+    def __str__(self):
+        return f"{self.seller.name} - {self.product.name} - {self.requested_quantity} ({self.date})"
+    
+    @property
+    def quantity(self):
+        """Returns approved quantity if available, otherwise requested quantity"""
+        return self.approved_quantity if self.approved_quantity is not None else self.requested_quantity
+
+
+class SellerInventory(models.Model):
+    """Current inventory held by a seller"""
+    seller = models.ForeignKey('operations.Seller', on_delete=models.CASCADE, related_name='inventory_items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['seller', 'product']
+        ordering = ['seller', 'product']
+    
+    def __str__(self):
+        return f"{self.seller.name} - {self.product.name}: {self.quantity}"

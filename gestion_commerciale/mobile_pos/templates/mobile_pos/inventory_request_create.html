@@ -1,0 +1,108 @@
+{% extends 'mobile_pos/base.html' %}
+{% load static %}
+
+{% block inner_title %}Nouvelle Demande d'Inventaire{% endblock %}
+
+{% block inner_content %}
+<div class="space-y-4">
+    <h1 class="text-2xl font-bold text-gray-900">Nouvelle Demande d'Inventaire</h1>
+    
+    <form method="post" id="inventory-request-form" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Warehouse Selection -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Entrepôt</label>
+            <select name="warehouse" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="">Sélectionner un entrepôt</option>
+                {% for warehouse in warehouses %}
+                <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Notes -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Notes (optionnel)</label>
+            <textarea name="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ajoutez des notes sur cette demande..."></textarea>
+        </div>
+
+        <!-- Products Section -->
+        <div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Produits</h2>
+                <button type="button" onclick="addProductRow()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">
+                    + Ajouter
+                </button>
+            </div>
+            
+            <div id="products-container" class="space-y-3">
+                <!-- Product rows will be added here -->
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex gap-3">
+            <button type="submit" class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+                Créer la Demande
+            </button>
+            <a href="{% url 'mobile_pos:inventory_request_list' %}" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+let productRowCount = 0;
+const products = [
+    {% for product in products %}
+    {id: {{ product.id }}, name: "{{ product.name|escapejs }}", price: {{ product.selling_price }}},
+    {% endfor %}
+];
+
+function addProductRow() {
+    productRowCount++;
+    const container = document.getElementById('products-container');
+    const row = document.createElement('div');
+    row.className = 'flex gap-2 items-end bg-gray-50 p-3 rounded-lg';
+    row.id = `product-row-${productRowCount}`;
+    
+    row.innerHTML = `
+        <div class="flex-1">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Produit</label>
+            <select name="product_id[]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+                <option value="">Sélectionner...</option>
+                ${products.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+            </select>
+        </div>
+        <div class="w-24">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Quantité</label>
+            <input type="number" name="quantity[]" min="1" value="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" required>
+        </div>
+        <div class="w-24">
+            <label class="block text-xs font-medium text-gray-700 mb-1">Notes</label>
+            <input type="text" name="item_notes[]" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Optionnel">
+        </div>
+        <button type="button" onclick="removeProductRow(${productRowCount})" class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    
+    container.appendChild(row);
+}
+
+function removeProductRow(id) {
+    const row = document.getElementById(`product-row-${id}`);
+    if (row) row.remove();
+}
+
+// Add first product row on load
+document.addEventListener('DOMContentLoaded', function() {
+    addProductRow();
+});
+</script>
+{% endblock %}
+

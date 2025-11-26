@@ -19,4 +19,6 @@ urlpatterns = [
     path('search/', views.search_products, name='product_search'),
 
     path('import/', views.import_products_csv, name='import_products'),
+    path('export/', views.export_products_csv, name='export_products'),
+    path('template/', views.download_csv_template, name='download_csv_template'),
 ]
